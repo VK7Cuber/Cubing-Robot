@@ -12,7 +12,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 class Ui_solving_window_design(object):
     def setupUi(self, solving_window_design):
         solving_window_design.setObjectName("solving_window_design")
-        solving_window_design.resize(812, 502)
+        solving_window_design.resize(700, 500)
         self.centralwidget = QtWidgets.QWidget(parent=solving_window_design)
         self.centralwidget.setObjectName("centralwidget")
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout(self.centralwidget)

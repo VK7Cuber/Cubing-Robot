@@ -1,11 +1,13 @@
 import sys
+import sqlite3
 
 from PyQt6.QtWidgets import QApplication, QMainWindow
-from PyQt6.QtGui import QPixmap
+from PyQt6.QtGui import QPixmap, QIcon
 from PyQt6.QtCore import Qt
 
 from Main_window_design import Ui_Main_Window_design
 from Solving_window_design import Ui_solving_window_design
+from Pattern_window_design import Ui_Pattern_window_design
 
 #from rubik_solver import utils
 
@@ -24,9 +26,10 @@ class Main_Window(QMainWindow, Ui_Main_Window_design):
     def __setup_window__(self):
         self.setWindowTitle("Cubing Robot")
         self.setGeometry(550, 200, 400, 400)
+        self.setWindowIcon(QIcon("images/logo/cubing_robot_logo_ico.png"))
     def put_logo(self):
         self.logo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.logo_label.setPixmap(QPixmap("images/cubing_robot_logo.png"))
+        self.logo_label.setPixmap(QPixmap("images/logo/cubing_robot_logo.png"))
 
 
     def __make_windows__(self):
@@ -53,6 +56,7 @@ class Main_Window(QMainWindow, Ui_Main_Window_design):
         self.hide()
     def __open_patter_window__(self):
         self.pattern_window.show()
+        self.pattern_window.__set_parent_position__()
         self.hide()
     def __open_learning_window__(self):
         self.learning_window.show()
@@ -78,6 +82,8 @@ class Solving_window(QMainWindow, Ui_solving_window_design):
 
     def __setup_window__(self):
         self.setWindowTitle("Cubing Robot")
+        self.setWindowIcon(QIcon("images/logo/cubing_robot_logo_ico.png"))
+
         self.begginer_method_rb.setChecked(True)
         self.motor_speed_spinbox.setValue(99)
 
@@ -96,13 +102,48 @@ class Solving_window(QMainWindow, Ui_solving_window_design):
 
 
 
-class Pattern_window(QMainWindow, Ui_solving_window_design):
+class Pattern_window(QMainWindow, Ui_Pattern_window_design):
     def __init__(self, par):
         super().__init__()
         self.parent = par
         self.initUI()
     def initUI(self):
         self.setupUi(self)
+
+        self.__setup_window__()
+        self.__connect__()
+
+    def __setup_window__(self):
+        self.setWindowTitle("Cubing Robot")
+        self.setWindowIcon(QIcon("images/logo/cubing_robot_logo_ico.png"))
+
+        self.patter_label.setPixmap(QPixmap("images/patterns/uz0.png"))
+        self.motor_speed_spin_box.setValue(99)
+
+    def __set_parent_position__(self):
+        main_window_position = self.parent.pos()
+        self.move(main_window_position.x(), main_window_position.y())
+
+
+    def __connect__(self):
+        self.main_button.clicked.connect(self.__open_main_window__)
+        self.patter_list_combo_box.currentIndexChanged.connect(self.__change_pattern__)
+
+    def __open_main_window__(self):
+        self.hide()
+        self.parent.show()
+        self.parent.__set_other_position__(self.pos())
+
+    def __change_pattern__(self):
+        with sqlite3.connect("patterns_data.sqlite") as connection:
+            cursor = connection.cursor()
+
+            query = f"""SELECT * FROM patterns WHERE name = '{self.patter_list_combo_box.currentText()}'"""
+            result = cursor.execute(query)
+            pattern = ()
+            for i in result:
+                pattern = i
+            self.patter_label.setPixmap(QPixmap(pattern[1]))
 
 class Learning_window(QMainWindow, Ui_solving_window_design):
     def __init__(self, par):
