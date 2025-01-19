@@ -1,7 +1,7 @@
 import sys
 import sqlite3
 
-from PyQt6.QtWidgets import QApplication, QMainWindow
+from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QButtonGroup
 from PyQt6.QtGui import QPixmap, QIcon
 from PyQt6.QtCore import Qt
 
@@ -78,27 +78,44 @@ class Solving_window(QMainWindow, Ui_solving_window_design):
         self.setupUi(self)
 
         self.__setup_window__()
-        self.__connect_buttons__()
+        self.__connect__()
 
     def __setup_window__(self):
         self.setWindowTitle("Cubing Robot")
         self.setWindowIcon(QIcon("images/logo/cubing_robot_logo_ico.png"))
 
+        self.stackedWidget.setCurrentIndex(0)
         self.begginer_method_rb.setChecked(True)
-        self.motor_speed_spinbox.setValue(99)
+        self.set_motor_speed_spinbox_1.setValue(99)
+        self.set_motor_speed_spinbox_2.setValue(99)
+
+        self.button_colors = ["#ffffff", "#008000", "#ffa500", "#0000ff", "#ff0000", "#ffff00"]
 
     def __set_parent_position__(self):
         main_window_position = self.parent.pos()
         self.move(main_window_position.x(), main_window_position.y())
 
 
-    def __connect_buttons__(self):
+    def __connect__(self):
         self.main_button.clicked.connect(self.__open_main_window__)
+
+        self.change_type_of_scanning_combo_box.currentIndexChanged.connect(self.__change_type_of_scanning__)
+        self.buttonGroup.buttonClicked.connect(self.__change_button_color__)
 
     def __open_main_window__(self):
         self.hide()
         self.parent.show()
         self.parent.__set_other_position__(self.pos())
+
+    def __change_type_of_scanning__(self):
+        self.stackedWidget.setCurrentIndex(self.change_type_of_scanning_combo_box.currentIndex())
+
+    def __change_button_color__(self, button):
+        color = button.palette().window().color().name()
+        index = self.button_colors.index(color) + 1
+        if index > 5:
+            index = 0
+        button.setStyleSheet(f"background: {self.button_colors[index]};")
 
 
 
