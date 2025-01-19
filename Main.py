@@ -9,7 +9,7 @@ from Main_window_design import Ui_Main_Window_design
 from Solving_window_design import Ui_solving_window_design
 from Pattern_window_design import Ui_Pattern_window_design
 
-#from rubik_solver import utils
+from rubik_solver import utils
 
 class Main_Window(QMainWindow, Ui_Main_Window_design):
     def __init__(self):
@@ -80,6 +80,8 @@ class Solving_window(QMainWindow, Ui_solving_window_design):
         self.__setup_window__()
         self.__connect__()
 
+        self.rubiks_cube = 'yyyyyyyyybbbbbbbbbrrrrrrrrrgggggggggooooooooowwwwwwwww'
+
     def __setup_window__(self):
         self.setWindowTitle("Cubing Robot")
         self.setWindowIcon(QIcon("images/logo/cubing_robot_logo_ico.png"))
@@ -90,6 +92,7 @@ class Solving_window(QMainWindow, Ui_solving_window_design):
         self.set_motor_speed_spinbox_2.setValue(99)
 
         self.button_colors = ["#ffffff", "#008000", "#ffa500", "#0000ff", "#ff0000", "#ffff00"]
+        self.button_colors_names = {0: 'w', 1: 'g', 2: 'o', 3: 'b', 4: 'r', 5: 'y'}
 
     def __set_parent_position__(self):
         main_window_position = self.parent.pos()
@@ -98,6 +101,8 @@ class Solving_window(QMainWindow, Ui_solving_window_design):
 
     def __connect__(self):
         self.main_button.clicked.connect(self.__open_main_window__)
+
+        self.solve_button_2.clicked.connect(self.__make_assambling_algorithm__)
 
         self.change_type_of_scanning_combo_box.currentIndexChanged.connect(self.__change_type_of_scanning__)
         self.buttonGroup.buttonClicked.connect(self.__change_button_color__)
@@ -116,6 +121,18 @@ class Solving_window(QMainWindow, Ui_solving_window_design):
         if index > 5:
             index = 0
         button.setStyleSheet(f"background: {self.button_colors[index]};")
+
+        configuration_index = button.objectName()[-2:]
+        if configuration_index[0] == "_":
+            configuration_index = configuration_index[1]
+        configuration_index = int(configuration_index)
+        self.rubiks_cube = self.rubiks_cube[:configuration_index] + self.button_colors_names[index] + self.rubiks_cube[configuration_index+1:]
+    def __make_assambling_algorithm__(self):
+        try:
+            assambling_algorithm = str(utils.solve(self.rubiks_cube, "Kociemba"))[1:-1]
+            self.assembling_algorithm_label_2.setText(assambling_algorithm)
+        except:
+            self.statusbar.showMessage("Введена неверная конфигурация кубика! Проверьте правильность расположения цветов!")
 
 
 
@@ -184,3 +201,8 @@ if __name__ == '__main__':
     cubing_robot = Main_Window()
     cubing_robot.show()
     sys.exit(app.exec())
+
+from rubik_solver import utils
+
+cube = "rbwoyowbbbggwbbygoryworbbworyorgyygygwyrororrwobwwyggg"
+print(utils.solve(cube, "Kociemba"))
