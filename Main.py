@@ -3,13 +3,14 @@ import sqlite3
 
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QButtonGroup
 from PyQt6.QtGui import QPixmap, QIcon
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 
 from Main_window_design import Ui_Main_Window_design
 from Solving_window_design import Ui_solving_window_design
 from Pattern_window_design import Ui_Pattern_window_design
 
 from rubik_solver import utils
+from arduino_connection import *
 
 class Main_Window(QMainWindow, Ui_Main_Window_design):
     def __init__(self):
@@ -23,10 +24,14 @@ class Main_Window(QMainWindow, Ui_Main_Window_design):
         self.__connect_buttons__()
         self.put_logo()
 
+        self.connected_picture = QPixmap("images/logo/cubing_robot_connected.png")
+        self.disconnected_picture = QPixmap("images/logo/cubing_robot_disconnected.png")
+
     def __setup_window__(self):
         self.setWindowTitle("Cubing Robot")
         self.setGeometry(550, 200, 400, 400)
         self.setWindowIcon(QIcon("images/logo/cubing_robot_logo_ico.png"))
+
     def put_logo(self):
         self.logo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.logo_label.setPixmap(QPixmap("images/logo/cubing_robot_logo.png"))
@@ -44,6 +49,9 @@ class Main_Window(QMainWindow, Ui_Main_Window_design):
 
         self.reference_window = Reference_window(self)
         self.reference_window.hide()
+
+        self.windows = [self.solving_window, self.pattern_window, self.learning_window, self.reference_window]
+
     def __connect_buttons__(self):
         self.solving_button.clicked.connect(self.__open_solving_window__)
         self.pattern_button.clicked.connect(self.__open_patter_window__)
@@ -69,18 +77,19 @@ class Main_Window(QMainWindow, Ui_Main_Window_design):
         self.move(position.x(), position.y())
 
 
+
 class Solving_window(QMainWindow, Ui_solving_window_design):
     def __init__(self, par):
         super().__init__()
         self.parent = par
         self.initUI()
+
+        self.rubiks_cube = 'yyyyyyyyybbbbbbbbbrrrrrrrrrgggggggggooooooooowwwwwwwww'
     def initUI(self):
         self.setupUi(self)
 
         self.__setup_window__()
         self.__connect__()
-
-        self.rubiks_cube = 'yyyyyyyyybbbbbbbbbrrrrrrrrrgggggggggooooooooowwwwwwwww'
 
     def __setup_window__(self):
         self.setWindowTitle("Cubing Robot")
@@ -93,6 +102,8 @@ class Solving_window(QMainWindow, Ui_solving_window_design):
 
         self.button_colors = ["#ffffff", "#008000", "#ffa500", "#0000ff", "#ff0000", "#ffff00"]
         self.button_colors_names = {0: 'w', 1: 'g', 2: 'o', 3: 'b', 4: 'r', 5: 'y'}
+        self.timer = QTimer()
+
 
     def __set_parent_position__(self):
         main_window_position = self.parent.pos()
@@ -106,6 +117,10 @@ class Solving_window(QMainWindow, Ui_solving_window_design):
 
         self.change_type_of_scanning_combo_box.currentIndexChanged.connect(self.__change_type_of_scanning__)
         self.buttonGroup.buttonClicked.connect(self.__change_button_color__)
+
+        self.timer.timeout.connect(self.__check_connection__)
+        self.timer.start(100)
+
 
     def __open_main_window__(self):
         self.hide()
@@ -129,10 +144,21 @@ class Solving_window(QMainWindow, Ui_solving_window_design):
         self.rubiks_cube = self.rubiks_cube[:configuration_index] + self.button_colors_names[index] + self.rubiks_cube[configuration_index+1:]
     def __make_assambling_algorithm__(self):
         try:
+            self.statusbar.showMessage("")
+            self.statusbar.setStyleSheet("")
             assambling_algorithm = str(utils.solve(self.rubiks_cube, "Kociemba"))[1:-1]
             self.assembling_algorithm_label_2.setText(assambling_algorithm)
         except:
             self.statusbar.showMessage("Введена неверная конфигурация кубика! Проверьте правильность расположения цветов!")
+            self.statusbar.setStyleSheet("background: #ff0000")
+
+    def __check_connection__(self):
+        arduino_port = find_arduino()
+        if arduino_port is not None:
+            self.is_connected_label.setPixmap(self.parent.connected_picture)
+        else:
+            self.is_connected_label.setPixmap(self.parent.disconnected_picture)
+        self.timer.start(100)
 
 
 
@@ -201,8 +227,3 @@ if __name__ == '__main__':
     cubing_robot = Main_Window()
     cubing_robot.show()
     sys.exit(app.exec())
-
-from rubik_solver import utils
-
-cube = "rbwoyowbbbggwbbygoryworbbworyorgyygygwyrororrwobwwyggg"
-print(utils.solve(cube, "Kociemba"))
