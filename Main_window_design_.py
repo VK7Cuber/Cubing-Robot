@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'C:\Users\Asus\Downloads\Main_window_design.ui'
+# Form implementation generated from reading ui file 'C:\Users\Asus\Downloads\Main_window_design_.ui'
 #
 # Created by: PyQt6 UI code generator 6.4.2
 #
@@ -77,8 +77,16 @@ class Ui_Main_Window_design(object):
         self.horizontalLayout_4.addItem(spacerItem9)
         self.verticalLayout.addLayout(self.horizontalLayout_4)
         self.verticalLayout_2.addLayout(self.verticalLayout)
-        spacerItem10 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Fixed)
+        spacerItem10 = QtWidgets.QSpacerItem(20, 49, QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Fixed)
         self.verticalLayout_2.addItem(spacerItem10)
+        self.horizontalLayout_6 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_6.setObjectName("horizontalLayout_6")
+        spacerItem11 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Minimum)
+        self.horizontalLayout_6.addItem(spacerItem11)
+        self.theme_button = QtWidgets.QPushButton(parent=self.centralwidget)
+        self.theme_button.setObjectName("theme_button")
+        self.horizontalLayout_6.addWidget(self.theme_button)
+        self.verticalLayout_2.addLayout(self.horizontalLayout_6)
         main_window_design.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(parent=main_window_design)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 26))
@@ -99,3 +107,4 @@ class Ui_Main_Window_design(object):
         self.pattern_button.setText(_translate("main_window_design", "Узоры"))
         self.learning_button.setText(_translate("main_window_design", "Обучение"))
         self.reference_button.setText(_translate("main_window_design", "Справка"))
+        self.theme_button.setText(_translate("main_window_design", "Тема: светлая"))

@@ -1,6 +1,7 @@
 import serial
 import struct
 import serial.tools.list_ports
+import time
 
 
 def send_massage(array):
@@ -29,7 +30,7 @@ def find_arduino():
 
     arduino_port = None
     for port in ports:
-        if 'USB-SERIAL' in port.description:
+        if 'USB-SERIAL' in port.description or 'Arduino' in port.description:
             arduino_port = port.device
             break
     return arduino_port
