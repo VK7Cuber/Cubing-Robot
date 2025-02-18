@@ -4,7 +4,7 @@ import serial.tools.list_ports
 import time
 
 
-def send_massage(array):
+def send_massage(speed, array):
     encoding = {"U": 0, "D": 1, "L": 2, "F": 3, "R": 4, "B": 5,
                 "U'": 6, "D'": 7, "L'": 8, "F'": 9, "R'": 10, "B'": 11,
                 "U2": 12, "D2": 13, "L2": 14, "F2": 15, "R2": 16, "B2": 17}
@@ -15,15 +15,23 @@ def send_massage(array):
     while not connected:
         serin = arduino.read()
         connected = True
+    arduino.write(struct.pack(">B", speed))
+    is_got = False
+    while not is_got:
+        answer = arduino.readline().strip()
+        is_got = True
     for i in array:
         num = encoding[i]
         arduino.write(struct.pack(">B", num))
         is_got = False
         while not is_got:
             ans = arduino.readline().strip()
-            print(ans.decode())
+            if int(ans) == -1:
+                return 0
+            #print(ans.decode())
             is_got = True
     arduino.close()
+    return 1
 
 def find_arduino():
     ports = serial.tools.list_ports.comports()

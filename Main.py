@@ -7,7 +7,7 @@ from PyQt6.QtGui import QPixmap, QIcon, QFont
 from PyQt6.QtCore import Qt, QTimer
 
 from Main_window_design_ import Ui_Main_Window_design
-from Solving_window_design import Ui_solving_window_design
+from Solving_window_design import Ui_Solving_window_design
 from Pattern_window_design import Ui_Pattern_window_design
 from Scramble_window_design import Ui_Scramble_window_design
 
@@ -66,8 +66,8 @@ class Main_Window(QMainWindow, Ui_Main_Window_design):
         self.reference_window = Reference_window(self)
         self.reference_window.hide()
 
-        self.windows = [self.solving_window, self.scramble_window, self.pattern_window,
-                        self.learning_window, self.reference_window]
+        # self.windows = [self.solving_window, self.scramble_window, self.pattern_window,
+        #                self.learning_window, self.reference_window]
 
     def __connect__(self):
         self.solving_button.clicked.connect(self.__open_solving_window__)
@@ -123,11 +123,12 @@ class Main_Window(QMainWindow, Ui_Main_Window_design):
         self.logo_label.setPixmap(self.themes[self.current_theme][2])
 
 
-class Solving_window(QMainWindow, Ui_solving_window_design):
+class Solving_window(QMainWindow, Ui_Solving_window_design):
     def __init__(self, par):
         super().__init__()
         self.parent = par
         self.error_message = ""
+        self.count_of_clicks = 0
         self.initUI()
 
         self.rubiks_cube = 'yyyyyyyyybbbbbbbbbrrrrrrrrrgggggggggooooooooowwwwwwwww'
@@ -147,7 +148,7 @@ class Solving_window(QMainWindow, Ui_solving_window_design):
         self.set_motor_speed_spinbox_2.setValue(99)
 
         self.button_colors = ["#ffffff", "#008000", "#ffa500", "#0000ff", "#ff0000", "#ffff00"]
-        self.button_colors_names = {0: 'w', 1: 'g', 2: 'o', 3: 'b', 4: 'r', 5: 'y'}
+        self.button_colors_names = ['w', 'g', 'o', 'b', 'r', 'y']
 
 
     def __set_parent_position__(self):
@@ -159,6 +160,10 @@ class Solving_window(QMainWindow, Ui_solving_window_design):
         self.main_button.clicked.connect(self.__open_main_window__)
 
         self.solve_button_2.clicked.connect(self.__make_assambling_algorithm__)
+
+        self.save_scramble_button.clicked.connect(self.__save_scramble__)
+
+        self.open_last_scramble_button.clicked.connect(self.__open_last_scramble__)
 
         self.change_type_of_scanning_combo_box.currentIndexChanged.connect(self.__change_type_of_scanning__)
         self.buttonGroup.buttonClicked.connect(self.__change_button_color__)
@@ -207,10 +212,68 @@ class Solving_window(QMainWindow, Ui_solving_window_design):
         try:
             self.statusbar.showMessage("")
             self.statusbar.setStyleSheet("")
-            send_massage(list(map(str, algorithm)))
+            answer = send_massage(255 - ((int(self.set_motor_speed_spinbox_2.text())) + 1), list(map(str, algorithm)))
+            if answer != 1:
+                self.statusbar.setStyleSheet("background: red")
+                self.statusbar.showMessage("Кубик не вставлен в робота!!!")
         except:
             self.statusbar.showMessage(self.error_message)
             self.statusbar.setStyleSheet("background: #ff0000")
+
+    def __save_scramble__(self):
+        self.error_message = "Введена неверная конфигурация кубика! Проверьте правильность расположения цветов!"
+        self.statusbar.setStyleSheet("")
+        self.statusbar.showMessage("")
+        index = 0
+        with open("last_scramble_index", "r") as read_file:
+            index = int(read_file.readline().strip())
+        try:
+            with sqlite3.connect("Scrambles_data.sqlite") as database:
+                cursor = database.cursor()
+                algorithm = list(map(str, utils.solve(self.rubiks_cube, "Kociemba")))
+                reversed_algorithm = " ".join(reverse_algorithm(algorithm))
+                algorithm = " ".join(algorithm)
+                query = f"""INSERT INTO Scrambles(id, configuration, scramble, reversed_scramble) VALUES("{index + 1}", "{self.rubiks_cube}", "{algorithm}", "{reversed_algorithm}")"""
+                cursor.execute(query)
+                with open("last_scramble_index", "w") as write_file:
+                    write_file.write(str(index + 1))
+        except:
+            self.statusbar.setStyleSheet("background: red")
+            self.statusbar.showMessage(self.error_message)
+
+    def __open_last_scramble__(self):
+        self.error_message = "Нет сохранённых скрамблов!"
+        try:
+            self.statusbar.setStyleSheet("")
+            self.statusbar.showMessage("")
+            index = 0
+            with open("last_scramble_index") as file:
+                index = int(file.readline().strip())
+            with sqlite3.connect("Scrambles_data.sqlite") as database:
+                cursor = database.cursor()
+                query = f"""SELECT configuration, scramble, reversed_scramble FROM Scrambles
+                WHERE id = {index - self.count_of_clicks}"""
+                result = cursor.execute(query)
+                algorithms_set = []
+                for i in result:
+                    algorithms_set = i
+                self.__set_scramble__(algorithms_set)
+            self.count_of_clicks += 1
+            if index == self.count_of_clicks:
+                self.count_of_clicks = 0
+        except:
+            self.statusbar.setStyleSheet("background: red")
+            self.statusbar.showMessage(self.error_message)
+
+    def __set_scramble__(self, algorithms_set):
+        self.rubiks_cube = algorithms_set[0]
+        index = 0
+        centre_indexes = [4, 13, 22, 31, 40, 49]
+        for button in self.buttonGroup.buttons():
+            if index in centre_indexes:
+                index += 1
+            button.setStyleSheet(f"background: {self.button_colors[self.button_colors_names.index(algorithms_set[0][index])]}")
+            index += 1
 
 
 class Pattern_window(QMainWindow, Ui_Pattern_window_design):
@@ -272,7 +335,10 @@ class Pattern_window(QMainWindow, Ui_Pattern_window_design):
         else:
             self.statusbar.setStyleSheet("")
             self.statusbar.showMessage("")
-            send_massage(self.current_algorithm)
+            answer = send_massage(255 - int(self.motor_speed_spin_box.text()), list(map(str, self.current_algorithm)))
+            if answer != 1:
+                self.statusbar.setStyleSheet("background: red")
+                self.statusbar.showMessage("Кубик не вставлен в робота!!!")
 
 class Scramble_window(QMainWindow, Ui_Scramble_window_design):
     def __init__(self, par):
@@ -328,11 +394,15 @@ class Scramble_window(QMainWindow, Ui_Scramble_window_design):
         self.statusbar.setStyleSheet("")
         scramble = make_scramble()
         self.scramble_label.setText(" ".join(scramble))
-        try:
-            send_massage(scramble)
-        except:
+        #try:
+        answer = send_massage(255 - ((int(self.set_motor_speed_spinbox.text())) + 1), scramble)
+        print(answer)
+        if answer != 1:
             self.statusbar.setStyleSheet("background: red")
-            self.statusbar.showMessage("Робот не подключён!")
+            self.statusbar.showMessage("Кубик не вставлен в робота!!!")
+        # except:
+        #     self.statusbar.setStyleSheet("background: red")
+        #     self.statusbar.showMessage("Робот не подключён!")
 
 
     def __set_parent_position__(self):
@@ -371,7 +441,7 @@ class Scramble_window(QMainWindow, Ui_Scramble_window_design):
 
 
 
-class Learning_window(QMainWindow, Ui_solving_window_design):
+class Learning_window(QMainWindow, Ui_Solving_window_design):
     def __init__(self, par):
         super().__init__()
         self.parent = par
@@ -379,7 +449,7 @@ class Learning_window(QMainWindow, Ui_solving_window_design):
     def initUI(self):
         self.setupUi(self)
 
-class Reference_window(QMainWindow, Ui_solving_window_design):
+class Reference_window(QMainWindow, Ui_Solving_window_design):
     def __init__(self, par):
         super().__init__()
         self.parent = par

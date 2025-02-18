@@ -22,3 +22,16 @@ def make_random_index():
     return int(index)
 
 
+def reverse_algorithm(algorithm):
+    reversed_algorithm = []
+    for i in range(len(algorithm)):
+        if "2" not in algorithm[i]:
+            if "'" in algorithm[i]:
+                reversed_algorithm.append(algorithm[i][0])
+            else:
+                reversed_algorithm.append(algorithm[i][0] + "'")
+        else:
+            reversed_algorithm.append(algorithm[i])
+    reversed_algorithm = list(map(str, reversed(reversed_algorithm)))
+    return reversed_algorithm
+
