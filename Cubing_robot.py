@@ -10,7 +10,7 @@ from Main_window_design_ import Ui_Main_Window_design
 from Solving_window_design import Ui_Solving_window_design
 from Pattern_window_design import Ui_Pattern_window_design
 from Scramble_window_design import Ui_Scramble_window_design
-
+from Learning_window_TRY_1 import Learning
 from rubik_solver import utils
 import qdarktheme
 from arduino_connection import *
@@ -394,15 +394,14 @@ class Scramble_window(QMainWindow, Ui_Scramble_window_design):
         self.statusbar.setStyleSheet("")
         scramble = make_scramble()
         self.scramble_label.setText(" ".join(scramble))
-        #try:
-        answer = send_massage(255 - ((int(self.set_motor_speed_spinbox.text())) + 1), scramble)
-        print(answer)
-        if answer != 1:
+        try:
+          answer = send_massage(255 - ((int(self.set_motor_speed_spinbox.text())) + 1), scramble)
+          if answer != 1:
             self.statusbar.setStyleSheet("background: red")
             self.statusbar.showMessage("Кубик не вставлен в робота!!!")
-        # except:
-        #     self.statusbar.setStyleSheet("background: red")
-        #     self.statusbar.showMessage("Робот не подключён!")
+        except:
+            self.statusbar.setStyleSheet("background: red")
+            self.statusbar.showMessage("Робот не подключён!")
 
 
     def __set_parent_position__(self):
@@ -441,13 +440,47 @@ class Scramble_window(QMainWindow, Ui_Scramble_window_design):
 
 
 
-class Learning_window(QMainWindow, Ui_Solving_window_design):
+class Learning_window(QMainWindow, Learning):
     def __init__(self, par):
         super().__init__()
         self.parent = par
         self.initUI()
     def initUI(self):
         self.setupUi(self)
+
+        self.main_button.clicked.connect(self.__open_main_window__)
+
+        self.base_algorithm_showing_button.clicked.connect(self.send_base)
+
+        self.comboBox_2.currentIndexChanged.connect(self.__change_type_of_scanning__)
+        #self.CFOP_algorithm_showing_butto.clicked.connect(self.send)
+        self.stackedWidget_2.setCurrentIndex(0)
+
+    def __change_type_of_scanning__(self):
+        self.stackedWidget_2.setCurrentIndex(self.comboBox_2.currentIndex())
+
+    def send_base(self):
+        self.statusbar.showMessage("")
+        self.statusbar.setStyleSheet("")
+        try:
+            with sqlite3.connect("Base_method_algorithms_data.sqlite") as connection:
+                cursor = connection.cursor()
+
+                query = f"""SELECT * FROM Algorithms WHERE id = {self.base_algorithm_showing_box.currentIndex()}"""
+                result = cursor.execute(query)
+                pattern = ()
+                for i in result:
+                    pattern = i
+                send_massage(205, list(map(str, pattern[1].split())))
+        except:
+            self.statusbar.showMessage("Робот не подключен!")
+            self.statusbar.setStyleSheet("background: red")
+
+    def __open_main_window__(self):
+        self.hide()
+        self.parent.show()
+        self.parent.__set_other_position__(self.pos())
+
 
 class Reference_window(QMainWindow, Ui_Solving_window_design):
     def __init__(self, par):
@@ -456,6 +489,8 @@ class Reference_window(QMainWindow, Ui_Solving_window_design):
         self.initUI()
     def initUI(self):
         self.setupUi(self)
+
+
 
 
 
