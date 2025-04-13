@@ -2,20 +2,20 @@ import sys
 import sqlite3
 import keyboard
 
-from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QButtonGroup
-from PyQt6.QtGui import QPixmap, QIcon, QFont
-from PyQt6.QtCore import Qt, QTimer
+from PySide6.QtWidgets import QApplication, QMainWindow
+from PySide6.QtGui import QPixmap, QIcon, QFont
+from PySide6.QtCore import Qt, QTimer
 
-from Main_window_design_ import Ui_Main_Window_design
-from Solving_window_design import Ui_Solving_window_design
-from Pattern_window_design import Ui_Pattern_window_design
-from Scramble_window_design import Ui_Scramble_window_design
-from Learning_window_TRY_1 import Learning
+from Windows_design_python.Main_window_design_ import Ui_Main_Window_design
+from Windows_design_python.Solving_window_design import Ui_Solving_window_design
+from Windows_design_python.Pattern_window_design import Ui_Pattern_window_design
+from Windows_design_python.Scramble_window_design import Ui_Scramble_window_design
+from Windows_design_python.Learning_window_TRY_1 import Learning
 from rubik_solver import utils
 import qdarktheme
-from arduino_connection import *
-from scramble import *
-from make_link import *
+from Devices.Arduino.arduino_connection import *
+from other.Other.scramble import *
+
 
 # Доделать:
 # 1. Сделать одну функцию для открытия каждого окна, принимающую имя окна
@@ -225,17 +225,17 @@ class Solving_window(QMainWindow, Ui_Solving_window_design):
         self.statusbar.setStyleSheet("")
         self.statusbar.showMessage("")
         index = 0
-        with open("last_scramble_index", "r") as read_file:
+        with open("other/Other/last_scramble_index", "r") as read_file:
             index = int(read_file.readline().strip())
         try:
-            with sqlite3.connect("Scrambles_data.sqlite") as database:
+            with sqlite3.connect("databases/Scrambles_data.sqlite") as database:
                 cursor = database.cursor()
                 algorithm = list(map(str, utils.solve(self.rubiks_cube, "Kociemba")))
                 reversed_algorithm = " ".join(reverse_algorithm(algorithm))
                 algorithm = " ".join(algorithm)
                 query = f"""INSERT INTO Scrambles(id, configuration, scramble, reversed_scramble) VALUES("{index + 1}", "{self.rubiks_cube}", "{algorithm}", "{reversed_algorithm}")"""
                 cursor.execute(query)
-                with open("last_scramble_index", "w") as write_file:
+                with open("other/Other/last_scramble_index", "w") as write_file:
                     write_file.write(str(index + 1))
         except:
             self.statusbar.setStyleSheet("background: red")
@@ -247,9 +247,9 @@ class Solving_window(QMainWindow, Ui_Solving_window_design):
             self.statusbar.setStyleSheet("")
             self.statusbar.showMessage("")
             index = 0
-            with open("last_scramble_index") as file:
+            with open("other/Other/last_scramble_index") as file:
                 index = int(file.readline().strip())
-            with sqlite3.connect("Scrambles_data.sqlite") as database:
+            with sqlite3.connect("databases/Scrambles_data.sqlite") as database:
                 cursor = database.cursor()
                 query = f"""SELECT configuration, scramble, reversed_scramble FROM Scrambles
                 WHERE id = {index - self.count_of_clicks}"""
@@ -281,6 +281,7 @@ class Pattern_window(QMainWindow, Ui_Pattern_window_design):
         super().__init__()
         self.parent = par
         self.current_algorithm = "R L' F B' U D' R L'".split()
+        self.solved_pattern = None
         self.initUI()
     def initUI(self):
         self.setupUi(self)
@@ -306,6 +307,7 @@ class Pattern_window(QMainWindow, Ui_Pattern_window_design):
         self.patter_list_combo_box.currentIndexChanged.connect(self.__change_pattern__)
 
         self.solve_button.clicked.connect(self.__send_algorithm__)
+        self.return_to_solved_state_btn.clicked.connect(self.__return_to_solved_state__)
 
     def __open_main_window__(self):
         self.hide()
@@ -313,7 +315,7 @@ class Pattern_window(QMainWindow, Ui_Pattern_window_design):
         self.parent.__set_other_position__(self.pos())
 
     def __change_pattern__(self):
-        with sqlite3.connect("cube_patterns_data.sqlite") as connection:
+        with sqlite3.connect("databases/cube_patterns_data.sqlite") as connection:
             cursor = connection.cursor()
 
             query = f"""SELECT * FROM patterns WHERE name = '{self.patter_list_combo_box.currentText()}'"""
@@ -339,6 +341,24 @@ class Pattern_window(QMainWindow, Ui_Pattern_window_design):
             if answer != 1:
                 self.statusbar.setStyleSheet("background: red")
                 self.statusbar.showMessage("Кубик не вставлен в робота!!!")
+            else:
+                self.solved_pattern = list(map(str, self.current_algorithm))
+
+    def __return_to_solved_state__(self):
+        if find_arduino() is None:
+            self.statusbar.setStyleSheet("background: red")
+            self.statusbar.showMessage("Робот не подключён!")
+        elif self.solved_pattern == None:
+            self.statusbar.setStyleSheet("background: red")
+            self.statusbar.showMessage("Никакой узор не собран!")
+        else:
+            self.statusbar.setStyleSheet("")
+            self.statusbar.showMessage("")
+            answer = send_massage(255 - int(self.motor_speed_spin_box.text()), reverse_algorithm(self.solved_pattern))
+            if answer != 1:
+                self.statusbar.setStyleSheet("background: red")
+                self.statusbar.showMessage("Кубик не вставлен в робота!!!")
+
 
 class Scramble_window(QMainWindow, Ui_Scramble_window_design):
     def __init__(self, par):
@@ -463,7 +483,7 @@ class Learning_window(QMainWindow, Learning):
         self.statusbar.showMessage("")
         self.statusbar.setStyleSheet("")
         try:
-            with sqlite3.connect("Base_method_algorithms_data.sqlite") as connection:
+            with sqlite3.connect("databases/Base_method_algorithms_data.sqlite") as connection:
                 cursor = connection.cursor()
 
                 query = f"""SELECT * FROM Algorithms WHERE id = {self.base_algorithm_showing_box.currentIndex()}"""

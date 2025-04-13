@@ -34,4 +34,3 @@ def reverse_algorithm(algorithm):
             reversed_algorithm.append(algorithm[i])
     reversed_algorithm = list(map(str, reversed(reversed_algorithm)))
     return reversed_algorithm
-

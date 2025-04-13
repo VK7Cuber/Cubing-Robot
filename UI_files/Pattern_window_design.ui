@@ -1,0 +1,426 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>solving_window_design</class>
+ <widget class="QMainWindow" name="solving_window_design">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>950</width>
+    <height>613</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QHBoxLayout" name="horizontalLayout_4">
+    <item>
+     <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0">
+      <property name="sizeConstraint">
+       <enum>QLayout::SetFixedSize</enum>
+      </property>
+      <item>
+       <widget class="QPushButton" name="main_button">
+        <property name="text">
+         <string>На главную</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="reference_button">
+        <property name="text">
+         <string>Справка</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="verticalSpacer">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="Line" name="line">
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <layout class="QVBoxLayout" name="verticalLayout_3">
+      <item>
+       <widget class="QComboBox" name="patter_list_combo_box">
+        <item>
+         <property name="text">
+          <string>Точки</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Шахматы</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Шахматы с точками</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Зигзаг</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Четыре Z</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Крест Пламмера</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Крест Кристмана</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Шахматы 3-го порядка</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Шахматы 6-го порядка</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>6 букв Н</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>6 минусов</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Диагональные столбики	</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Столбики с крестом	</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Столбики с шахматным крестом
+</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Столбики с крышей	</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>4 буквы П
+</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>4 буквы Т	</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Буквы L
+</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Пасьянс 1	</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Пасьянс 4
+</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Мезон	</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Куб в кубе
+</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Кубик в кубе в кубе	</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Кольца	</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Змея
+</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Кольца 2 с мезоном	</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Червяк</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Рыбки</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Уголки</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Уголки второго порядка
+</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Вишни</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Ракета</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Ракета второго порядка	</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Реверс</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <widget class="QLabel" name="patter_label">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="Line" name="line_2">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <item>
+           <widget class="QLabel" name="pattern_formula_label">
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="verticalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <spacer name="verticalSpacer_3">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QLabel" name="label_4">
+          <property name="text">
+           <string>Установите скорость мотора (%):</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="motor_speed_spin_box"/>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <spacer name="verticalSpacer_4">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="solve_button">
+        <property name="text">
+         <string>Собрать</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <item>
+         <widget class="QPushButton" name="pushButton">
+          <property name="text">
+           <string>Вернуть в исходное состояние</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <spacer name="verticalSpacer_5">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <spacer name="horizontalSpacer">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="sizeType">
+       <enum>QSizePolicy::Expanding</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>300</width>
+        <height>20</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+    <item>
+     <layout class="QVBoxLayout" name="verticalLayout_7">
+      <item>
+       <widget class="QLabel" name="is_connected_label">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="verticalSpacer_6">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>950</width>
+     <height>26</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

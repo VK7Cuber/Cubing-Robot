@@ -188,12 +188,12 @@ void setup_motors(){
   // R_stepper.setRunMode(FOLLOW_POS);
   // B_stepper.setRunMode(FOLLOW_POS);
 
-  U_stepper.setMaxSpeed(3000);
-  D_stepper.setMaxSpeed(3000);
-  L_stepper.setMaxSpeed(3000);
-  F_stepper.setMaxSpeed(3000);
-  R_stepper.setMaxSpeed(3000);
-  B_stepper.setMaxSpeed(3000);
+  U_stepper.setMaxSpeed(3500);
+  D_stepper.setMaxSpeed(3500);
+  L_stepper.setMaxSpeed(3500);
+  F_stepper.setMaxSpeed(3500);
+  R_stepper.setMaxSpeed(3500);
+  B_stepper.setMaxSpeed(3500);
 
   U_stepper.setAcceleration(0);
   D_stepper.setAcceleration(0);
@@ -236,7 +236,7 @@ void turn_motor(int turn){
 
 void change_speed_of_motors(int percents){
   int correct_percents = 255 - percents;
-  float speed = correct_percents / 100.0 * 3000.0;
+  float speed = correct_percents / 100.0 * 3500.0;
   U_stepper.setMaxSpeed(int(speed));
   D_stepper.setMaxSpeed(int(speed));
   L_stepper.setMaxSpeed(int(speed));
