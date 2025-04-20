@@ -26,12 +26,8 @@ def send_massage(speed, array):
         is_got = False
         while not is_got:
             ans = arduino.readline().strip()
-            if int(ans) == -1:
-                return 0
-            #print(ans.decode())
             is_got = True
     arduino.close()
-    return 1
 
 def find_arduino():
     ports = serial.tools.list_ports.comports()
@@ -42,3 +38,4 @@ def find_arduino():
             arduino_port = port.device
             break
     return arduino_port
+

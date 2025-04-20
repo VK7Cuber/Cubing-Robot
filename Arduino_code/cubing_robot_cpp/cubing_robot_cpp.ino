@@ -1,9 +1,6 @@
 #define DRIVER_STEP_TIME 1
 #define GS_NO_ACCEL
 
-#define echo_pin 44
-#define trig_pin 42
-
 #include "GyverStepper2.h"
 
 // Пины перенастроить
@@ -22,6 +19,7 @@ GStepper2< STEPPER2WIRE> L_stepper(200 * 16, A0, A1, A2);
 //   U_stepper.brake();
 // }
 
+int CURRENT_SPEED = -1;
 
 void U_turn(int degrees, int direction){
   D_stepper.brake();
@@ -188,12 +186,12 @@ void setup_motors(){
   // R_stepper.setRunMode(FOLLOW_POS);
   // B_stepper.setRunMode(FOLLOW_POS);
 
-  U_stepper.setMaxSpeed(3500);
-  D_stepper.setMaxSpeed(3500);
-  L_stepper.setMaxSpeed(3500);
-  F_stepper.setMaxSpeed(3500);
-  R_stepper.setMaxSpeed(3500);
-  B_stepper.setMaxSpeed(3500);
+  U_stepper.setMaxSpeed(7000);
+  D_stepper.setMaxSpeed(7000);
+  L_stepper.setMaxSpeed(7000);
+  F_stepper.setMaxSpeed(7000);
+  R_stepper.setMaxSpeed(7000);
+  B_stepper.setMaxSpeed(7000);
 
   U_stepper.setAcceleration(0);
   D_stepper.setAcceleration(0);
@@ -236,48 +234,32 @@ void turn_motor(int turn){
 
 void change_speed_of_motors(int percents){
   int correct_percents = 255 - percents;
-  float speed = correct_percents / 100.0 * 3500.0;
-  U_stepper.setMaxSpeed(int(speed));
-  D_stepper.setMaxSpeed(int(speed));
-  L_stepper.setMaxSpeed(int(speed));
-  F_stepper.setMaxSpeed(int(speed));
-  R_stepper.setMaxSpeed(int(speed));
-  B_stepper.setMaxSpeed(int(speed));
+  float speed = correct_percents / 100.0 * 7000.0;
+  int int_speed = int(speed);
+  if (int_speed != CURRENT_SPEED) {
+    CURRENT_SPEED = int_speed;
 
-  U_stepper.brake();
-  D_stepper.brake();
-  L_stepper.brake();
-  F_stepper.brake();
-  R_stepper.brake();
-  B_stepper.brake();
+    U_stepper.setMaxSpeed(int(speed));
+    D_stepper.setMaxSpeed(int(speed));
+    L_stepper.setMaxSpeed(int(speed));
+    F_stepper.setMaxSpeed(int(speed));
+    R_stepper.setMaxSpeed(int(speed));
+    B_stepper.setMaxSpeed(int(speed));
 
-  Serial.println(int(speed));
+    U_stepper.brake();
+    D_stepper.brake();
+    L_stepper.brake();
+    F_stepper.brake();
+    R_stepper.brake();
+    B_stepper.brake();
+  }
+  Serial.println(int_speed);
 
-}
-
-int get_distance(){
-  long t;
-  long cm;
-
-  digitalWrite(trig_pin, 0);
-  delayMicroseconds(5);
-
-  digitalWrite(trig_pin, 1);
-  delayMicroseconds(10);
-  digitalWrite(trig_pin, 0);
-
-  t = pulseIn(echo_pin, 1);
-  cm = t / 58.2;
-
-  return cm;
 }
 
 
 void setup(){
   Serial.begin(9600);
-
-  pinMode(trig_pin, OUTPUT);
-  pinMode(echo_pin, INPUT);
 
   U_stepper.brake();
   D_stepper.brake();
@@ -302,21 +284,13 @@ void setup(){
 void loop(){ 
   if(Serial.available() > 0){
     int turn = Serial.read();
-    if (get_distance() <= 13 or get_distance() > 100){
-      if (turn > 90){
-        change_speed_of_motors(turn);
-      }
-      else{ 
-        turn_motor(turn); 
-        Serial.println(turn);
-      }
+    if (turn > 90){
+      change_speed_of_motors(turn);
     }
-    else {
-      Serial.println(-1);
+    else{ 
+      turn_motor(turn); 
+      Serial.println(turn);
     }
   }
   //D_turn(50 * 16, 1);
 }
-
-
-

@@ -1,25 +1,24 @@
 import random
 
+turns = ["U", "D", "L", "F", "R", "B",
+         "U'", "D'", "L'", "F'", "R'", "B'",
+         "U2", "D2", "L2", "F2", "R2", "B2",
+         "U2", "D2", "L2", "F2", "R2", "B2"]
+
 
 def make_scramble():
-    turns = ["U", "D", "L", "F", "R", "B",
-             "U'", "D'", "L'", "F'", "R'", "B'",
-             "U2", "D2", "L2", "F2", "R2", "B2",
-             "U2", "D2", "L2", "F2", "R2", "B2"]
-    scramble = []
-    scramble.append(turns[int(make_random_index())])
+    scramble = [get_random_turn()]
     for i in range(random.randint(17, 25)):
-        index = make_random_index()
-        while turns[index][0] == scramble[i][0]:
-            index = make_random_index()
-        scramble.append(turns[int(index)])
+        turn = get_random_turn()
+        while turn[0] == scramble[i][0]:
+            turn = get_random_turn()
+        scramble.append(turn)
     return scramble
 
-def make_random_index():
-    index = random.randint(0, 18) * random.random()
-    while not (0 < index < 24):
-        index = random.randint(0, 24) * random.random()
-    return int(index)
+
+def get_random_turn():
+    index = random.randint(0, 23)
+    return turns[index]
 
 
 def reverse_algorithm(algorithm):
