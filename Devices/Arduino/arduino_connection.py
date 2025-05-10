@@ -4,30 +4,48 @@ import serial.tools.list_ports
 import time
 
 
-def send_massage(speed, array):
-    encoding = {"U": 0, "D": 1, "L": 2, "F": 3, "R": 4, "B": 5,
-                "U'": 6, "D'": 7, "L'": 8, "F'": 9, "R'": 10, "B'": 11,
-                "U2": 12, "D2": 13, "L2": 14, "F2": 15, "R2": 16, "B2": 17}
-    connected = False
+class Arduino:
+    def __init__(self):
+        self.encoding = {"U": 0, "D": 1, "L": 2, "F": 3, "R": 4, "B": 5,
+                         "U'": 6, "D'": 7, "L'": 8, "F'": 9, "R'": 10, "B'": 11,
+                         "U2": 12, "D2": 13, "L2": 14, "F2": 15, "R2": 16, "B2": 17}
+        self.arduino = None
 
-    arduino = serial.Serial(find_arduino(), 9600)
+    def connect_arduino(self, port):
+        connected = False
 
-    while not connected:
-        serin = arduino.read()
-        connected = True
-    arduino.write(struct.pack(">B", speed))
-    is_got = False
-    while not is_got:
-        answer = arduino.readline().strip()
-        is_got = True
-    for i in array:
-        num = encoding[i]
-        arduino.write(struct.pack(">B", num))
+        self.arduino = serial.Serial(port, 9600)
+        while not connected:
+            serin = self.arduino.read()
+            connected = True
+
+    def disconnect(self):
+        self.arduino.close()
+        self.arduino = None
+
+    def set_motors_speed(self, speed):
+        if self.arduino is None:
+            raise ConnectionError
+        self.arduino.write(struct.pack(">B", speed))
         is_got = False
         while not is_got:
-            ans = arduino.readline().strip()
+            answer = self.arduino.readline().strip()
             is_got = True
-    arduino.close()
+
+    def send_message(self, algorithm):
+        if self.arduino is None:
+            raise ConnectionError
+        for turn in algorithm:
+            number = self.encoding[turn]
+            self.arduino.write(struct.pack(">B", number))
+            is_got = False
+            while not is_got:
+                answer = self.arduino.readline().strip()
+                is_got = True
+
+    def check_connection(self):
+        return self.arduino is not None
+
 
 def find_arduino():
     ports = serial.tools.list_ports.comports()
@@ -39,3 +57,30 @@ def find_arduino():
             break
     return arduino_port
 
+
+arduino = Arduino()
+
+# def send_massage(speed, array):
+#     encoding = {"U": 0, "D": 1, "L": 2, "F": 3, "R": 4, "B": 5,
+#                 "U'": 6, "D'": 7, "L'": 8, "F'": 9, "R'": 10, "B'": 11,
+#                 "U2": 12, "D2": 13, "L2": 14, "F2": 15, "R2": 16, "B2": 17}
+#     connected = False
+#
+#     arduino = serial.Serial(find_arduino(), 9600)
+#
+#     while not connected:
+#         serin = arduino.read()
+#         connected = True
+#     arduino.write(struct.pack(">B", speed))
+#     is_got = False
+#     while not is_got:
+#         answer = arduino.readline().strip()
+#         is_got = True
+#     for i in array:
+#         num = encoding[i]
+#         arduino.write(struct.pack(">B", num))
+#         is_got = False
+#         while not is_got:
+#             ans = arduino.readline().strip()
+#             is_got = True
+#     arduino.close()

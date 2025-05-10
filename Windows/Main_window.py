@@ -22,10 +22,12 @@ class MainWindow(QMainWindow, Ui_Main_Window_design):
     def __init__(self):
         super().__init__()
         self.timer = QTimer()
-        self.connected_picture = QPixmap("images/logo/cubing_robot_connected.png")
-        self.disconnected_picture = QPixmap("images/logo/cubing_robot_disconnected.png")
-        self.themes = {0: ["light", "Светлая", QPixmap("images/logo/cubing_robot_logo_black.png")],
-                       1: ["dark", "Тёмная", QPixmap("images/logo/cubing_robot_logo_white.png")]}
+
+        self.is_connected_pictures = {True: QPixmap("images/logo/cubing_robot_connected.png"),
+                                      False: QPixmap("images/logo/cubing_robot_disconnected.png")}
+
+        self.themes = [["light", "Светлая", QPixmap("images/logo/cubing_robot_logo_black.png")],
+                       ["dark", "Тёмная", QPixmap("images/logo/cubing_robot_logo_white.png")]]
         self.current_theme = 0
         self.initUI()
 
@@ -69,10 +71,12 @@ class MainWindow(QMainWindow, Ui_Main_Window_design):
         self.windows = [self.solving_window, self.scramble_window, self.manual_turns_window,
                         self.pattern_window, self.learning_window, self.reference_window]
 
+        self.__resize_windows__()
+
     def __resize_windows__(self):
         self.solving_window.resize(QSize(650, 600))
-        for window in self.windows[:1]:
-            window.resize(window.minimumSize())
+        for index in range(1, 5):
+            self.windows[index].resize(self.windows[index].minimumSize())
 
     def __connect__(self):
         self.solving_button.clicked.connect(self.__open_solving_window__)
@@ -121,16 +125,23 @@ class MainWindow(QMainWindow, Ui_Main_Window_design):
     def __check_connection__(self):
         arduino_port = find_arduino()
         if arduino_port is not None:
-            self.solving_window.is_connected_label.setPixmap(self.connected_picture)
-            self.manual_turns_window.is_connected_label.setPixmap(self.connected_picture)
-            self.scramble_window.is_connected_label.setPixmap(self.connected_picture)
-            self.pattern_window.is_connected_label.setPixmap(self.connected_picture)
+            self.__change_connected_picture__(True)
+            if not arduino.check_connection():
+                try:
+                    arduino.connect_arduino(arduino_port)
+                except:
+                    pass
         else:
-            self.solving_window.is_connected_label.setPixmap(self.disconnected_picture)
-            self.manual_turns_window.is_connected_label.setPixmap(self.disconnected_picture)
-            self.scramble_window.is_connected_label.setPixmap(self.disconnected_picture)
-            self.pattern_window.is_connected_label.setPixmap(self.disconnected_picture)
-        # self.timer.start(100)
+            self.__change_connected_picture__(False)
+            if arduino.check_connection():
+                arduino.disconnect()
+
+    def __change_connected_picture__(self, is_connected):
+        # Сделать через цикл for, когда допишу окна:
+        self.solving_window.is_connected_label.setPixmap(self.is_connected_pictures[is_connected])
+        self.manual_turns_window.is_connected_label.setPixmap(self.is_connected_pictures[is_connected])
+        self.scramble_window.is_connected_label.setPixmap(self.is_connected_pictures[is_connected])
+        self.pattern_window.is_connected_label.setPixmap(self.is_connected_pictures[is_connected])
 
     def __change_theme__(self):
         self.current_theme = 1 - self.current_theme

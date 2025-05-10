@@ -40,7 +40,8 @@ class LearningWindow(QMainWindow, Learning):
                 pattern = ()
                 for i in result:
                     pattern = i
-                send_massage(205, list(map(str, pattern[1].split())))
+                arduino.set_motors_speed(205)
+                arduino.send_message(list(map(str, pattern[1].split())))
         except:
             self.statusbar.showMessage("Робот не подключен!")
             self.statusbar.setStyleSheet("background: red")

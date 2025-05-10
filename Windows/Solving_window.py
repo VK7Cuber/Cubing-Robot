@@ -98,11 +98,12 @@ class SolvingWindow(QMainWindow, Ui_Solving_window_design):
 
     def send_assembling_algorithm(self, algorithm):
         self.error_message = "Робот не подключён!"
-        try:
+        if arduino.check_connection():
             self.statusbar.showMessage("")
             self.statusbar.setStyleSheet("")
-            send_massage(255 - ((int(self.set_motor_speed_spinbox_2.text())) + 1), list(map(str, algorithm)))
-        except:
+            arduino.set_motors_speed(255 - ((int(self.set_motor_speed_spinbox_2.text())) + 1))
+            arduino.send_message(list(map(str, algorithm)))
+        else:
             self.statusbar.showMessage(self.error_message)
             self.statusbar.setStyleSheet("background: #ff0000")
 

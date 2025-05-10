@@ -1,13 +1,10 @@
 # coding=utf-8
-
-import time
-
 from PySide6.QtWidgets import QMainWindow
-from PySide6.QtGui import QIcon, QPixmap
+from PySide6.QtGui import QIcon
 
 from Windows_design_python.Manual_turns_window_design import Ui_Manual_turns_window
 from Devices.Arduino.arduino_connection import *
-from other.Other.scramble import get_random_turn
+# from other.Other.scramble import get_random_turn
 
 CONSTANT_ROTATION = False
 
@@ -29,6 +26,8 @@ class ManualTurnsWindow(QMainWindow, Ui_Manual_turns_window):
         self.setWindowIcon(QIcon("images/logo/cubing_robot_logo_ico.png"))
 
         self.set_motor_speed_spinbox.setValue(99)
+        self.constant_rotation_button.hide()
+        self.stop_constant_rotation_button.hide()
 
     def __set_parent_position__(self):
         main_window_position = self.parent.pos()
@@ -59,7 +58,8 @@ class ManualTurnsWindow(QMainWindow, Ui_Manual_turns_window):
         try:
             self.statusbar.setStyleSheet("")
             self.statusbar.showMessage("")
-            send_massage(255 - int(self.set_motor_speed_spinbox.text()), [turn])
+            arduino.set_motors_speed(255 - int(self.set_motor_speed_spinbox.text()))
+            arduino.send_message([turn])
         except:
             self.statusbar.setStyleSheet("background: red;")
             self.statusbar.showMessage("Робот не подключен!")

@@ -73,7 +73,6 @@ class ScrambleWindow(QMainWindow, Ui_Scramble_window_design):
     def __change_window_functions__(self):
         self.stackedWidget.setCurrentIndex(self.change_mode_comboBox.currentIndex())
 
-
     def __change_button_color__(self, button):
         color = button.palette().window().color().name()
         index = self.button_colors.index(color) + 1
@@ -86,8 +85,7 @@ class ScrambleWindow(QMainWindow, Ui_Scramble_window_design):
             configuration_index = configuration_index[1]
         configuration_index = int(configuration_index)
         self.rubiks_cube = self.rubiks_cube[:configuration_index] + self.button_colors_names[index] + self.rubiks_cube[
-                                                                                               configuration_index + 1:]
-
+                                                                                                      configuration_index + 1:]
 
     def __get_scramble__(self):
         try:
@@ -101,7 +99,6 @@ class ScrambleWindow(QMainWindow, Ui_Scramble_window_design):
             self.statusbar.setStyleSheet("background: red")
             error_message = "Введена неверная конфигурация кубика! Проверьте правильность расположения цветов!"
             self.statusbar.showMessage(error_message)
-
 
     def __scamble_cube_by_entered_state__(self):
         try:
@@ -118,12 +115,12 @@ class ScrambleWindow(QMainWindow, Ui_Scramble_window_design):
             self.statusbar.showMessage(error_message)
 
     def scramble_cube(self, scramble):
-        try:
-            send_massage(255 - ((int(self.set_motor_speed_spinbox_2.text())) + 1), scramble)
-        except:
+        if arduino.check_connection():
+            arduino.set_motors_speed(255 - ((int(self.set_motor_speed_spinbox_2.text())) + 1))
+            arduino.send_message(scramble)
+        else:
             self.statusbar.setStyleSheet("background: red")
             self.statusbar.showMessage("Робот не подключён!")
-
 
     def __cut_down__(self):
         self.timer_label.setText("0 : 00")

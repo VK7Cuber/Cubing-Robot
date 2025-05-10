@@ -62,7 +62,7 @@ class PatternsWindow(QMainWindow, Ui_Pattern_window_design):
             self.current_algorithm = i[2].split()
 
     def __send_algorithm__(self):
-        if find_arduino() is None:
+        if not arduino.check_connection():
             self.statusbar.setStyleSheet("background: red")
             self.statusbar.showMessage("Робот не подключён!")
         elif self.current_algorithm[0] == 'В':
@@ -71,17 +71,19 @@ class PatternsWindow(QMainWindow, Ui_Pattern_window_design):
         else:
             self.statusbar.setStyleSheet("")
             self.statusbar.showMessage("")
-            send_massage(255 - int(self.motor_speed_spin_box.text()), list(map(str, self.current_algorithm)))
+            arduino.set_motors_speed(255 - int(self.motor_speed_spin_box.text()))
+            arduino.send_message(list(map(str, self.current_algorithm)))
             self.solved_pattern = list(map(str, self.current_algorithm))
 
     def __return_to_solved_state__(self):
-        if find_arduino() is None:
+        if not arduino.check_connection():
             self.statusbar.setStyleSheet("background: red")
             self.statusbar.showMessage("Робот не подключён!")
-        elif self.solved_pattern == None:
+        elif self.solved_pattern is None:
             self.statusbar.setStyleSheet("background: red")
             self.statusbar.showMessage("Никакой узор не собран!")
         else:
             self.statusbar.setStyleSheet("")
             self.statusbar.showMessage("")
-            send_massage(255 - int(self.motor_speed_spin_box.text()), reverse_algorithm(self.solved_pattern))
+            arduino.set_motors_speed(255 - int(self.motor_speed_spin_box.text()))
+            arduino.send_message(reverse_algorithm(self.solved_pattern))
