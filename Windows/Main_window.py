@@ -42,7 +42,7 @@ class MainWindow(QMainWindow, Ui_Main_Window_design):
     def __setup_window__(self):
         self.setWindowTitle("Cubing Robot")
         self.setGeometry(550, 200, 400, 400)
-        self.setWindowIcon(QIcon("images/logo/cubing_robot_logo_ico.png"))
+        self.setWindowIcon(QIcon("images/logo/cubing_robot_logo_icon.png"))
         qdarktheme.setup_theme("light")
 
     def put_logo(self):

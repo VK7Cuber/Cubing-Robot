@@ -30,7 +30,7 @@ class SolvingWindow(QMainWindow, Ui_Solving_window_design):
 
     def __setup_window__(self):
         self.setWindowTitle("Cubing Robot")
-        self.setWindowIcon(QIcon("images/logo/cubing_robot_logo_ico.png"))
+        self.setWindowIcon(QIcon("images/logo/cubing_robot_logo_icon.png"))
 
         self.stackedWidget.setCurrentIndex(0)
         self.begginer_method_rb.setChecked(True)

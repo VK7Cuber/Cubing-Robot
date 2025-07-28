@@ -23,7 +23,7 @@ class ManualTurnsWindow(QMainWindow, Ui_Manual_turns_window):
 
     def __setup_window__(self):
         self.setWindowTitle("Cubing Robot")
-        self.setWindowIcon(QIcon("images/logo/cubing_robot_logo_ico.png"))
+        self.setWindowIcon(QIcon("images/logo/cubing_robot_logo_icon.png"))
 
         self.set_motor_speed_spinbox.setValue(99)
         self.constant_rotation_button.hide()

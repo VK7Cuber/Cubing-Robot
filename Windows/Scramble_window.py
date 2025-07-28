@@ -41,7 +41,7 @@ class ScrambleWindow(QMainWindow, Ui_Scramble_window_design):
 
     def __setup_window__(self):
         self.setWindowTitle("Cubing Robot")
-        self.setWindowIcon(QIcon("images/logo/cubing_robot_logo_ico.png"))
+        self.setWindowIcon(QIcon("images/logo/cubing_robot_logo_icon.png"))
 
         self.set_motor_speed_spinbox_1.setValue(99)
         self.set_motor_speed_spinbox_2.setValue(99)

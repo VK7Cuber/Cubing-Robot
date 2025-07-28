@@ -1,57 +1,58 @@
-import cv2
+import cv2 as cv
 import numpy as np
 import json
+import math
 
-import cv2 as cv
-#
 # Примерные координаты:
-coordinates_of_circles_RED = [(225, 165), (257, 200), (295, 245),
-                              (222, 212), (255, 275), (297, 312),
-                              (220, 260), (263, 340), (292, 367)]
+coordinates_of_circles_RED_ = [(306, 418), (336, 389), (380, 319),
+                              (303, 369), (347, 325), (379, 275),
+                              (302, 304), (342, 262), (378, 227)]
 
-coordinates_of_circles_GREEN = [(353, 245), (398, 225), (438, 200),
-                                (345, 320), (400, 275), (436, 250),
-                                (340, 380), (385, 350), (406, 334)]
+coordinates_of_circles_GREEN_ = [(182, 333), (234, 397), (262, 418),
+                                (177, 293), (213, 337), (258, 370),
+                                (172, 240), (208, 273), (251, 310)]
 
-coordinates_of_circles_BLUE = [(355, 130), (395, 161), (436, 229),
-                               (355, 180), (405, 210), (438, 258),
-                               (355, 245), (400, 280), (438, 313)]
 
-coordinates_of_circles_ORANGE = [(230, 227), (277, 158), (310, 130),
-                                 (230, 270), (270, 220), (312, 185),
-                                 (227, 320), (265, 290), (305, 250)]
+coordinates_of_circles_BLUE_ = [(353, 215), (396, 175), (436, 140),
+                               (355, 285), (405, 235), (430, 185),
+                               (355, 338), (385, 310), (438, 228)]
 
-coordinates_of_circles_YELLOW = [(363, 88), (387, 105), (425, 142),
-                                 (292, 94), (335, 125), (385, 165),
-                                 (250, 120), (285, 155), (330, 195)]
+coordinates_of_circles_ORANGE_ = [(222, 148), (260, 173), (302, 215),
+                                 (222, 195), (260, 245), (310, 280),
+                                 (225, 241), (280, 312), (312, 335)]
 
-coordinates_of_circles_WHITE = [(418, 368), (380, 400), (356, 419),
-                                (380, 343), (337, 377), (281, 393),
-                                (335, 310), (287, 343), (250, 370)]
+coordinates_of_circles_YELLOW_ = [(325, 155), (275, 120), (235, 88),
+                                 (372, 115), (325, 80), (275, 61),
+                                 (412, 82), (375, 55), (346, 37)]
 
-# coordinates_of_circles_RED = [(225, 165), (257, 200), (295, 245),
-#                               (222, 212), "red", (297, 312),
-#                               (220, 260), (263, 340), (292, 367)]
-#
-# coordinates_of_circles_GREEN = [(353, 245), (398, 225), (438, 200),
-#                                 (345, 320), "green", (436, 250),
-#                                 (340, 380), (385, 350), (406, 334)]
-#
-# coordinates_of_circles_BLUE = [(355, 130), (395, 161), (436, 229),
-#                                (355, 180), "blue", (438, 258),
-#                                (355, 245), (400, 280), (438, 313)]
-#
-# coordinates_of_circles_ORANGE = [(230, 227), (277, 158), (310, 130),
-#                                  (230, 270), "orange", (312, 185),
-#                                  (227, 320), (265, 290), (305, 250)]
-#
-# coordinates_of_circles_YELLOW = [(363, 88), (387, 105), (425, 142),
-#                                  (292, 94), "yellow", (385, 165),
-#                                  (250, 120), (285, 155), (330, 195)]
-#
-# coordinates_of_circles_WHITE = [(418, 368), (380, 400), (356, 419),
-#                                 (380, 343), "white", (281, 393),
-#                                 (335, 310), (287, 343), (250, 370)]
+coordinates_of_circles_WHITE_ = [(273, 251), (316, 210), (355, 178),
+                                (224, 220), (268, 182), (324, 153),
+                                (187, 191), (220, 165), (292, 132)]
+
+coordinates_of_circles_RED = [(306, 418), (336, 389), (380, 319),
+                              (303, 369), "red", (379, 275),
+                              (302, 304), (342, 262), (378, 227)]
+
+coordinates_of_circles_GREEN = [(182, 333), (234, 397), (262, 418),
+                                (177, 293), "green", (258, 370),
+                                (172, 240), (208, 273), (251, 310)]
+
+
+coordinates_of_circles_BLUE = [(353, 215), (396, 175), (436, 140),
+                               (355, 285), "blue", (430, 185),
+                               (355, 338), (385, 310), (438, 228)]
+
+coordinates_of_circles_ORANGE = [(222, 148), (260, 173), (302, 215),
+                                 (222, 195), "orange", (310, 280),
+                                 (225, 241), (280, 312), (312, 335)]
+
+coordinates_of_circles_YELLOW = [(325, 155), (275, 120), (235, 88),
+                                 (372, 115), "yellow", (275, 61),
+                                 (412, 82), (375, 55), (346, 37)]
+
+coordinates_of_circles_WHITE = [(273, 251), (316, 210), (355, 178),
+                                (224, 220), "white", (324, 153),
+                                (187, 191), (220, 165), (292, 132)]
 
 COORDINATES_OF_CIRCLES = {"yellow": coordinates_of_circles_YELLOW,
                           "blue": coordinates_of_circles_BLUE,
@@ -70,9 +71,10 @@ class ColorDetectionError(ScanError):
 
 
 class Camera:
-    def __init__(self, index, sides):
+    def __init__(self, index, sides, should_flip_image=False):
         self.camera = cv.VideoCapture(index)
         self.sides = sides
+        self.should_flip_image = should_flip_image
         self.check_connection()
 
     def check_connection(self):
@@ -85,32 +87,48 @@ class Camera:
         if not ret:
             raise ConnectionError
 
-        frame = cv2.convertScaleAbs(frame, alpha=1.5, beta=1)
+        #frame = cv.convertScaleAbs(frame, alpha=1.5, beta=1)
+        if self.should_flip_image:
+            frame = cv.flip(frame, 0)
+
         return frame
 
     def get_colors_array(self, side):
         colors = []
         coordinates_of_colors = COORDINATES_OF_CIRCLES[side]
+        frame = self.get_frame()
         for coordinates in coordinates_of_colors:
             if type(coordinates) == str:
                 color_array = coordinates
             else:
-                calibrating_array_red = []
-                calibrating_array_green = []
-                calibrating_array_blue = []
+                # calibrating_array_red = []
+                # calibrating_array_green = []
+                # calibrating_array_blue = []
                 coordinates = list(reversed(coordinates))
-                for i in range(5):
-                    frame = self.get_frame()
-                    color = frame[*coordinates, [2, 1, 0]]
-                    calibrating_array_red.append(int(color[0]))
-                    calibrating_array_green.append(int(color[1]))
-                    calibrating_array_blue.append(int(color[2]))
-                color_array = [int(sum(calibrating_array_red) / 5),
-                               int(sum(calibrating_array_green) / 5),
-                               int(sum(calibrating_array_blue) / 5)]
+                color_array = self.get_color(frame, coordinates)
+                #color_array = list(map(int, frame[*coordinates, [2, 1, 0]]))
+                # for i in range(5):
+                #     frame = self.get_frame()
+                #     color = frame[*coordinates, [2, 1, 0]]
+                #     calibrating_array_red.append(int(color[0]))
+                #     calibrating_array_green.append(int(color[1]))
+                #     calibrating_array_blue.append(int(color[2]))
+                # color_array = [int(sum(calibrating_array_red) / 5),
+                #                int(sum(calibrating_array_green) / 5),
+                #                int(sum(calibrating_array_blue) / 5)]
             colors.append(color_array)
         return colors
 
+    def get_color(self, frame, coordinates):
+        offset = [-1, 0, 1]
+        color_array = []
+        for y_offset_index in range(3):
+            for x_offset_index in range(3):
+                y, x = coordinates[0] + offset[y_offset_index], coordinates[1] + offset[x_offset_index]
+                color = frame[y, x, [2, 1, 0]]
+                color_array.append(list(map(int, color)))
+        color_array = self.get_average_values(color_array)
+        return color_array
     def get_average_values(self, color_array):
         red = []
         green = []
@@ -137,11 +155,14 @@ class Camera:
         for side in self.sides:
             self.set_calibrated_value(side)
 
+    def release(self):
+        self.camera.release()
+
 
 class Scanner:
     def __init__(self):
-        self.camera_yrg = Camera(2, ["yellow", "red", "green"])
-        self.camera_obw = Camera(0, ["orange", "blue", "white"])
+        self.upper_camera = Camera(2, ["yellow", "orange", "blue"])
+        self.lower_camera = Camera(0, ["green", "red", "white"])
 
         self.yellow_value = None
         self.blue_value = None
@@ -163,34 +184,28 @@ class Scanner:
             self.white_value = data["colors"]["white"]
 
     def calibrate_values(self):
-        self.camera_yrg.calibrate_values()
-        self.camera_obw.calibrate_values()
+        self.upper_camera.calibrate_values()
+        self.lower_camera.calibrate_values()
 
     def scan_cube(self):
         self.get_colors_values()
+        lists_of_calibrated_colors_arrays = [self.yellow_value, self.blue_value, self.red_value,
+                                             self.green_value, self.orange_value, self.white_value]
+        colors_keys = ["y", "b", "r", "g", "o", "w"]
         cube = ""
-        colors = [*(self.camera_yrg.get_colors_array(color) for color in self.sides[:3]),
-                  *(self.camera_obw.get_colors_array(color) for color in self.sides[3:])]
-        print(colors)
+        colors = [self.upper_camera.get_colors_array("yellow"),
+                  self.upper_camera.get_colors_array("blue"),
+                  self.lower_camera.get_colors_array("red"),
+                  self.lower_camera.get_colors_array("green"),
+                  self.upper_camera.get_colors_array("orange"),
+                  self.lower_camera.get_colors_array("white")]
         for side in colors:
             for color in side:
                 if type(color) == str:
                     color_value = color[0]
                 else:
-                    if np.allclose(color, self.yellow_value, atol=20):
-                        color_value = "y"
-                    elif np.allclose(color, self.blue_value, atol=20):
-                        color_value = "b"
-                    elif np.allclose(color, self.red_value, atol=20):
-                        color_value = "r"
-                    elif np.allclose(color, self.green_value, atol=20):
-                        color_value = "g"
-                    elif np.allclose(color, self.orange_value, atol=20):
-                        color_value = "o"
-                    elif np.allclose(color, self.white_value, atol=20):
-                        color_value = "w"
-                    else:
-                        color_value = "Error"
+                    closest_list = find_closest_list(color, lists_of_calibrated_colors_arrays)
+                    color_value = colors_keys[lists_of_calibrated_colors_arrays.index(closest_list)]
                 cube += color_value
         return cube
 
@@ -204,20 +219,48 @@ class Scanner:
                 raise ColorDetectionError()
         return cube
 
+    def release_cameras(self):
+        self.upper_camera.release()
+        self.lower_camera.release()
 
-def showing_frame():
+def get_distance_between_lists(list_1, list_2):
+    return math.sqrt(sum((first_list_color - second_list_color) ** 2 for first_list_color, second_list_color in zip(list_1, list_2)))
+
+def find_closest_list(input_list, list_of_lists):
+    closest_distance = float('inf')
+    closest_list = []
+
+    for current_list in list_of_lists:
+        distance = get_distance_between_lists(input_list, current_list)
+        if distance < closest_distance:
+            closest_distance = distance
+            closest_list = current_list
+
+    return closest_list
+
+def showing_frame(should_turn_on_second_camera):
     cap_1 = cv.VideoCapture(2)
-    cap_2 = cv.VideoCapture(0)
-    if not cap_1.isOpened() or not cap_2.isOpened():
+    cap_2 = None
+    if should_turn_on_second_camera:
+        cap_2 = cv.VideoCapture(0)
+        if not cap_2.isOpened():
+            raise ConnectionError
+    if not cap_1.isOpened():
         raise ConnectionError
     while True:
         #Capture frame-by-frame
         ret_1, frame_1 = cap_1.read()
-        ret_2, frame_2 = cap_2.read()
+        ret_2, frame_2 = None, None
+        if should_turn_on_second_camera:
+            ret_2, frame_2 = cap_2.read()
 
         # if frame is read correctly ret is True
-        if not ret_1 or not ret_2:
+        if not ret_1 :
             raise ConnectionError
+
+        if should_turn_on_second_camera:
+            if not ret_2:
+                raise ConnectionError
         # Our operations on the frame come here
         #gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
         # Display the resulting frame
@@ -226,9 +269,16 @@ def showing_frame():
         #     get_color(frame, coordinates_of_circles)
         #     flag = False
         for i in range(9):
-            cv.circle(frame_1, coordinates_of_circles_RED[i], 5, (0, 255, 0))
-            cv.circle(frame_2, coordinates_of_circles_WHITE[i], 5, (0, 255, 0))
-        frame_2 = cv2.convertScaleAbs(frame_2, alpha=1.5, beta=0.8)
+            cv.circle(frame_2, coordinates_of_circles_WHITE_[i], 5, (0, 255, 0))
+            cv.circle(frame_2, coordinates_of_circles_RED_[i], 5, (0, 255, 0))
+            cv.circle(frame_2, coordinates_of_circles_GREEN_[i], 5, (0, 255, 0))
+            cv.circle(frame_1, coordinates_of_circles_BLUE_[i], 5, (0, 255, 0))
+            cv.circle(frame_1, coordinates_of_circles_ORANGE_[i], 5, (0, 255, 0))
+            cv.circle(frame_1, coordinates_of_circles_YELLOW_[i], 5, (0, 255, 0))
+            #if should_turn_on_second_camera:
+            #    cv.circle(frame_2, coordinates_of_circles_BLUE[i], 5, (0, 255, 0))
+        # if should_turn_on_second_camera:
+        #     frame_2 = cv2.convertScaleAbs(frame_2, alpha=1.5, beta=0.8)
         # coordinates = coordinates_of_circles_GREEN[0]
         # px = frame_1[coordinates[1], coordinates[0], [2,1,0]]
         # print(px)
@@ -239,19 +289,56 @@ def showing_frame():
         #     print("Yellow!")
         # elif 10 < px[0] < 40 and 10 < px[1] < 40 and 100 < px[2] < 130:
         #     print("Red!")
+        frame_2 = cv.flip(frame_2, 0)
+        # if should_turn_on_second_camera:
+        #     frame_2 = cv.convertScaleAbs(frame_2, alpha=0.5, beta=0.5)
+        # frame_1 = cv.convertScaleAbs(frame_1, alpha=0.5, beta=0.5)
         cv.imshow('frame_1', frame_1)
-        cv.imshow('frame_2', frame_2)
+        if should_turn_on_second_camera:
+            cv.imshow('frame_2', frame_2)
         if cv.waitKey(1) == ord('q'):
             break
 
     # When everything done, release the capture
     cap_1.release()
-    cap_2.release()
+    if should_turn_on_second_camera:
+        cap_2.release()
     cv.destroyAllWindows()
 
-#showing_frame()
-scanner = Scanner()
-print(scanner.scan_cube())
+
+showing_frame(True)
+# scanner = Scanner()
+# scanner.calibrate_values()
+# scanner.release_cameras()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # import numpy as np
 # import cv2
 #
@@ -305,3 +392,6 @@ print(scanner.scan_cube())
 #
 # capture.release()
 # cv2.destroyAllWindows()
+
+
+

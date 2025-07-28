@@ -26,7 +26,7 @@ class PatternsWindow(QMainWindow, Ui_Pattern_window_design):
 
     def __setup_window__(self):
         self.setWindowTitle("Cubing Robot")
-        self.setWindowIcon(QIcon("images/logo/cubing_robot_logo_ico.png"))
+        self.setWindowIcon(QIcon("images/logo/cubing_robot_logo_icon.png"))
 
         self.patter_label.setPixmap(QPixmap("images/patterns/uz0.png"))
         self.pattern_formula_label.setText("R L' F B' U D' R L'")
