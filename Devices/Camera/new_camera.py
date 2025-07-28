@@ -124,13 +124,14 @@ class Camera:
         for i in range(20):
             ret, frame = self.camera.read()
 
-            if not ret:
-                raise CameraConnectionError("Failed to read frame from camera")
+        if not ret:
+            raise CameraConnectionError("Failed to read frame from camera")
 
         if self.should_flip_image:
             frame = cv.flip(frame, 0)
 
         return frame
+
 
     def get_colors_array(self, side: str) -> List[str]:
         """
@@ -188,7 +189,7 @@ class Camera:
         avg_color = self.get_average_values(color_samples)
 
         # Classify the color
-        return self.classify_color(avg_color)
+        return self.classify_color_by_distance(avg_color)
 
     def get_average_values(self, color_array: List[List[int]]) -> List[int]:
         """Calculate average RGB values from multiple samples"""
@@ -207,41 +208,77 @@ class Camera:
 
         return avg_color
 
-    def classify_color(self, rgb_color: List[int]) -> str:
-        """
-        Classify RGB color into cube color using calibrated values
-
-        Args:
-            rgb_color: RGB color values [r, g, b]
-
-        Returns:
-            Color string (yellow, blue, red, green, orange, white)
-        """
-        # Use only distance-based classification with calibrated values
-        return self.classify_color_by_distance(rgb_color)
-
     def classify_color_by_distance(self, rgb_color: List[int]) -> str:
         """
-        Fallback color classification using Euclidean distance to calibrated values
+        Color classification using weighted Euclidean distance to calibrated values
         """
         try:
             with open("calibrated_color_values.json", 'r') as json_file:
                 calibrated_colors = json.load(json_file)["colors"]
         except (FileNotFoundError, KeyError, json.JSONDecodeError):
             raise ColorDetectionError("Calibrated color values file not found or invalid")
-
+        
         min_distance = float('inf')
         best_color = None
-
+        distances = {}
+        
+        # Calculate weighted distances for each color
         for color_name, calibrated_rgb in calibrated_colors.items():
-            distance = math.sqrt(sum((a - b) ** 2 for a, b in zip(rgb_color, calibrated_rgb)))
-            if distance < min_distance:
-                min_distance = distance
+            # Use weighted Euclidean distance (give more weight to red channel for red/orange distinction)
+            if color_name in ["red", "orange"]:
+                # Weight red channel more heavily for red/orange distinction
+                weighted_distance = math.sqrt(
+                    2.0 * (rgb_color[0] - calibrated_rgb[0]) ** 2 +  # Red channel weight
+                    1.0 * (rgb_color[1] - calibrated_rgb[1]) ** 2 +  # Green channel weight
+                    1.0 * (rgb_color[2] - calibrated_rgb[2]) ** 2    # Blue channel weight
+                )
+            elif color_name in ["blue", "green"]:
+                # Weight blue and green channels more heavily for blue/green distinction
+                weighted_distance = math.sqrt(
+                    1.0 * (rgb_color[0] - calibrated_rgb[0]) ** 2 +  # Red channel weight
+                    1.5 * (rgb_color[1] - calibrated_rgb[1]) ** 2 +  # Green channel weight
+                    2.0 * (rgb_color[2] - calibrated_rgb[2]) ** 2    # Blue channel weight
+                )
+            else:
+                # Standard Euclidean distance for other colors
+                weighted_distance = math.sqrt(sum((a - b) ** 2 for a, b in zip(rgb_color, calibrated_rgb)))
+            
+            distances[color_name] = weighted_distance
+            
+            if weighted_distance < min_distance:
+                min_distance = weighted_distance
                 best_color = color_name
-
+        
+        # Add confidence check - if the best match is too far, it might be an error
+        if min_distance > 100:  # Threshold for confidence
+            # Find the second best match
+            sorted_distances = sorted(distances.items(), key=lambda x: x[1])
+            if len(sorted_distances) >= 2:
+                second_best_color, second_distance = sorted_distances[1]
+                # If second best is very close to best, use additional logic
+                if second_distance - min_distance < 20:
+                    # For close matches, use additional RGB ratio analysis
+                    r, g, b = rgb_color
+                    if best_color == "red" and second_best_color == "orange":
+                        # Red should have higher red/green ratio than orange
+                        if g > r * 0.7:  # If green is too high relative to red
+                            best_color = "orange"
+                    elif best_color == "orange" and second_best_color == "red":
+                        # Orange should have some green component
+                        if g < r * 0.3:  # If green is too low relative to red
+                            best_color = "red"
+                    elif best_color == "blue" and second_best_color == "green":
+                        # Blue should have higher blue/green ratio
+                        if g > b * 0.8:  # If green is too high relative to blue
+                            best_color = "green"
+                    elif best_color == "green" and second_best_color == "blue":
+                        # Green should have higher green/blue ratio
+                        if b > g * 0.8:  # If blue is too high relative to green
+                            best_color = "blue"
+        
         if best_color is None:
             raise ColorDetectionError(f"Could not classify color {rgb_color}")
-
+        
         return best_color
 
     def set_calibrated_value(self, side: str):
@@ -420,27 +457,50 @@ def showing_frame():
         if not cap_2.isOpened():
             raise CameraConnectionError("Failed to open second camera")
 
+        # Create camera objects to use preprocessing
+        upper_cam = Camera(2, ["yellow", "orange", "blue"])
+        lower_cam = Camera(0, ["green", "red", "white"])
+
         while True:
-            ret_1, frame_1 = cap_1.read()
-            ret_2, frame_2 = cap_2.read()
+            # Get original frames
+            ret_1, frame_1_orig = cap_1.read()
+            ret_2, frame_2_orig = cap_2.read()
 
             if not ret_1:
                 raise CameraConnectionError("Failed to read from first camera")
             if not ret_2:
                 raise CameraConnectionError("Failed to read from second camera")
 
-            # Draw calibration circles on frames
-            for i in range(9):
-                cv.circle(frame_2, coordinates_of_circles_WHITE_[i], 5, (0, 255, 0))
-                cv.circle(frame_2, coordinates_of_circles_RED_[i], 5, (0, 255, 0))
-                cv.circle(frame_2, coordinates_of_circles_GREEN_[i], 5, (0, 255, 0))
-                cv.circle(frame_1, coordinates_of_circles_BLUE_[i], 5, (0, 255, 0))
-                cv.circle(frame_1, coordinates_of_circles_ORANGE_[i], 5, (0, 255, 0))
-                cv.circle(frame_1, coordinates_of_circles_YELLOW_[i], 5, (0, 255, 0))
+            # Get preprocessed frames
+            frame_1_processed = upper_cam.preprocess_frame(frame_1_orig)
+            frame_2_processed = lower_cam.preprocess_frame(frame_2_orig)
 
-            frame_2 = cv.flip(frame_2, 0)
-            cv.imshow('Lower Camera (Green, Red, White)', frame_2)
-            cv.imshow('Upper Camera (Yellow, Orange, Blue)', frame_1)
+            # Draw calibration circles on both original and processed frames
+            for i in range(9):
+                # Original frames
+                cv.circle(frame_2_orig, coordinates_of_circles_WHITE_[i], 5, (0, 255, 0))
+                cv.circle(frame_2_orig, coordinates_of_circles_RED_[i], 5, (0, 255, 0))
+                cv.circle(frame_2_orig, coordinates_of_circles_GREEN_[i], 5, (0, 255, 0))
+                cv.circle(frame_1_orig, coordinates_of_circles_BLUE_[i], 5, (0, 255, 0))
+                cv.circle(frame_1_orig, coordinates_of_circles_ORANGE_[i], 5, (0, 255, 0))
+                cv.circle(frame_1_orig, coordinates_of_circles_YELLOW_[i], 5, (0, 255, 0))
+                
+                # Processed frames
+                cv.circle(frame_2_processed, coordinates_of_circles_WHITE_[i], 5, (0, 255, 0))
+                cv.circle(frame_2_processed, coordinates_of_circles_RED_[i], 5, (0, 255, 0))
+                cv.circle(frame_2_processed, coordinates_of_circles_GREEN_[i], 5, (0, 255, 0))
+                cv.circle(frame_1_processed, coordinates_of_circles_BLUE_[i], 5, (0, 255, 0) )
+                cv.circle(frame_1_processed, coordinates_of_circles_ORANGE_[i], 5, (0, 255, 0))
+                cv.circle(frame_1_processed, coordinates_of_circles_YELLOW_[i], 5, (0, 255, 0))
+
+            frame_2_orig = cv.flip(frame_2_orig, 0)
+            frame_2_processed = cv.flip(frame_2_processed, 0)
+            
+            # Display both original and processed frames
+            cv.imshow('Lower Camera - Original', frame_2_orig)
+            cv.imshow('Lower Camera - Processed', frame_2_processed)
+            cv.imshow('Upper Camera - Original', frame_1_orig)
+            cv.imshow('Upper Camera - Processed', frame_1_processed)
 
             if cv.waitKey(1) == ord('q'):
                 break
@@ -470,11 +530,11 @@ def debug_color_detection():
 
             # Print colors in 3x3 grid format
             for i in range(3):
-                row = colors[i*3:(i+1)*3]
-                print(f"Row {i+1}: {row}")
-        
+                row = colors[i * 3:(i + 1) * 3]
+                print(f"Row {i + 1}: {row}")
+
         scanner.release_cameras()
-        
+
     except Exception as e:
         print(f"Debug error: {str(e)}")
 
@@ -485,12 +545,12 @@ if __name__ == "__main__":
     # showing_frame()
 
     # For debugging color detection
-    # debug_color_detection()
-    
+    #debug_color_detection()
+
     # For actual scanning
     try:
         scanner = Scanner()
-        scanner.calibrate_values()
+        # scanner.calibrate_values()
         cube_state = scanner.get_cube_state()
         print(f"Cube state: {cube_state}")
         scanner.release_cameras()

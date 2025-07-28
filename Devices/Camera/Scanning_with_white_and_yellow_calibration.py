@@ -124,8 +124,8 @@ class Camera:
         for i in range(20):
             ret, frame = self.camera.read()
 
-            if not ret:
-                raise CameraConnectionError("Failed to read frame from camera")
+        if not ret:
+            raise CameraConnectionError("Failed to read frame from camera")
 
         if self.should_flip_image:
             frame = cv.flip(frame, 0)
@@ -209,7 +209,7 @@ class Camera:
 
     def classify_color_by_distance(self, rgb_color: List[int]) -> str:
         """
-        Fallback color classification using Euclidean distance to calibrated values
+        Color classification using weighted Euclidean distance to calibrated values
         """
         try:
             with open("calibrated_color_values.json", 'r') as json_file:
@@ -219,12 +219,84 @@ class Camera:
 
         min_distance = float('inf')
         best_color = None
+        distances = {}
 
+        # Calculate weighted distances for each color
         for color_name, calibrated_rgb in calibrated_colors.items():
-            distance = math.sqrt(sum((a - b) ** 2 for a, b in zip(rgb_color, calibrated_rgb)))
-            if distance < min_distance:
-                min_distance = distance
+            # Use weighted Euclidean distance for problematic color pairs
+            if color_name in ["red", "orange"]:
+                # Weight red channel more heavily for red/orange distinction
+                weighted_distance = math.sqrt(
+                    2.0 * (rgb_color[0] - calibrated_rgb[0]) ** 2 +  # Red channel weight
+                    1.0 * (rgb_color[1] - calibrated_rgb[1]) ** 2 +  # Green channel weight
+                    1.0 * (rgb_color[2] - calibrated_rgb[2]) ** 2  # Blue channel weight
+                )
+            elif color_name in ["blue", "green"]:
+                # Weight blue and green channels more heavily for blue/green distinction
+                weighted_distance = math.sqrt(
+                    1.0 * (rgb_color[0] - calibrated_rgb[0]) ** 2 +  # Red channel weight
+                    1.5 * (rgb_color[1] - calibrated_rgb[1]) ** 2 +  # Green channel weight
+                    2.0 * (rgb_color[2] - calibrated_rgb[2]) ** 2  # Blue channel weight
+                )
+            elif color_name in ["yellow", "white"]:
+                # Weight all channels equally but add special logic for yellow/white
+                weighted_distance = math.sqrt(sum((a - b) ** 2 for a, b in zip(rgb_color, calibrated_rgb)))
+            else:
+                # Standard Euclidean distance for other colors
+                weighted_distance = math.sqrt(sum((a - b) ** 2 for a, b in zip(rgb_color, calibrated_rgb)))
+
+            distances[color_name] = weighted_distance
+
+            if weighted_distance < min_distance:
+                min_distance = weighted_distance
                 best_color = color_name
+
+        # Enhanced confidence check with specific logic for problematic pairs
+        r, g, b = rgb_color
+
+        # Find the second best match
+        sorted_distances = sorted(distances.items(), key=lambda x: x[1])
+        if len(sorted_distances) >= 2:
+            second_best_color, second_distance = sorted_distances[1]
+            distance_diff = second_distance - min_distance
+
+            # If distances are very close, use additional RGB analysis
+            if distance_diff < 25:
+                # Yellow vs White logic
+                if best_color == "yellow" and second_best_color == "white":
+                    # Yellow should have more color saturation, white should be more neutral
+                    if abs(r - g) < 20 and abs(g - b) < 20 and abs(r - b) < 20:
+                        best_color = "white"  # Very neutral = white
+                    elif r > 150 and g > 150 and b < 120:
+                        best_color = "yellow"  # High red/green, low blue = yellow
+                elif best_color == "white" and second_best_color == "yellow":
+                    # White should be more neutral, yellow should have more color
+                    if abs(r - g) > 30 or abs(g - b) > 30 or abs(r - b) > 30:
+                        best_color = "yellow"  # Not neutral = yellow
+                    elif r < 120 and g < 120 and b < 120:
+                        best_color = "white"  # All low = white
+
+                # Blue vs Green logic
+                elif best_color == "blue" and second_best_color == "green":
+                    # Blue should have higher blue component
+                    if b < g + 20:  # If blue isn't significantly higher than green
+                        best_color = "green"
+                    elif b > r + 50 and b > g + 30:
+                        best_color = "blue"  # Strong blue dominance
+                elif best_color == "green" and second_best_color == "blue":
+                    # Green should have higher green component
+                    if g < b + 20:  # If green isn't significantly higher than blue
+                        best_color = "blue"
+                    elif g > r + 50 and g > b + 30:
+                        best_color = "green"  # Strong green dominance
+
+                # Red vs Orange logic (existing)
+                elif best_color == "red" and second_best_color == "orange":
+                    if g > r * 0.7:  # If green is too high relative to red
+                        best_color = "orange"
+                elif best_color == "orange" and second_best_color == "red":
+                    if g < r * 0.3:  # If green is too low relative to red
+                        best_color = "red"
 
         if best_color is None:
             raise ColorDetectionError(f"Could not classify color {rgb_color}")
@@ -263,6 +335,64 @@ class Camera:
 
         except Exception as e:
             raise ColorDetectionError(f"Calibration failed for side {side}: {str(e)}")
+
+    def calibrate_specific_color(self, color_name: str):
+        """
+        Calibrate a specific color by sampling multiple frames for better accuracy
+
+        Args:
+            color_name: Name of the color to calibrate (yellow, blue, red, green, orange, white)
+        """
+        try:
+            # Sample multiple frames for better accuracy
+            color_samples = []
+            num_samples = 10
+
+            print(f"Calibrating {color_name}... Please keep the {color_name} face steady.")
+
+            for i in range(num_samples):
+                frame = self.get_frame()
+
+                # Find the coordinates for this color
+                if color_name in ["yellow", "orange", "blue"]:
+                    coordinates = COORDINATES_OF_CIRCLES[color_name]
+                else:
+                    coordinates = COORDINATES_OF_CIRCLES[color_name]
+
+                # Sample from center and edge positions
+                for coord in coordinates:
+                    if isinstance(coord, str):
+                        continue
+                    coord = list(reversed(coord))
+                    if 0 <= coord[0] < frame.shape[0] and 0 <= coord[1] < frame.shape[1]:
+                        color = frame[coord[0], coord[1], [2, 1, 0]]
+                        color_samples.append(list(map(int, color)))
+
+                # Small delay between samples
+                import time
+                time.sleep(0.1)
+
+            if color_samples:
+                avg_color = self.get_average_values(color_samples)
+
+                # Update calibration file
+                try:
+                    with open("calibrated_color_values.json", 'r') as json_file:
+                        data = json.load(json_file)
+                except (FileNotFoundError, json.JSONDecodeError):
+                    data = {"colors": {}}
+
+                data["colors"][color_name] = avg_color
+
+                with open("calibrated_color_values.json", 'w') as json_file:
+                    json.dump(data, json_file, indent=2)
+
+                print(f"{color_name} calibrated: RGB{avg_color}")
+            else:
+                print(f"No valid samples for {color_name}")
+
+        except Exception as e:
+            print(f"Calibration failed for {color_name}: {str(e)}")
 
     def calibrate_values(self):
         """Calibrate color values for all sides this camera handles"""
@@ -407,27 +537,50 @@ def showing_frame():
         if not cap_2.isOpened():
             raise CameraConnectionError("Failed to open second camera")
 
+        # Create camera objects to use preprocessing
+        upper_cam = Camera(2, ["yellow", "orange", "blue"])
+        lower_cam = Camera(0, ["green", "red", "white"])
+
         while True:
-            ret_1, frame_1 = cap_1.read()
-            ret_2, frame_2 = cap_2.read()
+            # Get original frames
+            ret_1, frame_1_orig = cap_1.read()
+            ret_2, frame_2_orig = cap_2.read()
 
             if not ret_1:
                 raise CameraConnectionError("Failed to read from first camera")
             if not ret_2:
                 raise CameraConnectionError("Failed to read from second camera")
 
-            # Draw calibration circles on frames
-            for i in range(9):
-                cv.circle(frame_2, coordinates_of_circles_WHITE_[i], 5, (0, 255, 0))
-                cv.circle(frame_2, coordinates_of_circles_RED_[i], 5, (0, 255, 0))
-                cv.circle(frame_2, coordinates_of_circles_GREEN_[i], 5, (0, 255, 0))
-                cv.circle(frame_1, coordinates_of_circles_BLUE_[i], 5, (0, 255, 0))
-                cv.circle(frame_1, coordinates_of_circles_ORANGE_[i], 5, (0, 255, 0))
-                cv.circle(frame_1, coordinates_of_circles_YELLOW_[i], 5, (0, 255, 0))
+            # Get preprocessed frames
+            frame_1_processed = upper_cam.preprocess_frame(frame_1_orig)
+            frame_2_processed = lower_cam.preprocess_frame(frame_2_orig)
 
-            frame_2 = cv.flip(frame_2, 0)
-            cv.imshow('Lower Camera (Green, Red, White)', frame_2)
-            cv.imshow('Upper Camera (Yellow, Orange, Blue)', frame_1)
+            # Draw calibration circles on both original and processed frames
+            for i in range(9):
+                # Original frames
+                cv.circle(frame_2_orig, coordinates_of_circles_WHITE_[i], 5, (0, 255, 0))
+                cv.circle(frame_2_orig, coordinates_of_circles_RED_[i], 5, (0, 255, 0))
+                cv.circle(frame_2_orig, coordinates_of_circles_GREEN_[i], 5, (0, 255, 0))
+                cv.circle(frame_1_orig, coordinates_of_circles_BLUE_[i], 5, (0, 255, 0))
+                cv.circle(frame_1_orig, coordinates_of_circles_ORANGE_[i], 5, (0, 255, 0))
+                cv.circle(frame_1_orig, coordinates_of_circles_YELLOW_[i], 5, (0, 255, 0))
+
+                # Processed frames
+                cv.circle(frame_2_processed, coordinates_of_circles_WHITE_[i], 5, (0, 255, 0))
+                cv.circle(frame_2_processed, coordinates_of_circles_RED_[i], 5, (0, 255, 0))
+                cv.circle(frame_2_processed, coordinates_of_circles_GREEN_[i], 5, (0, 255, 0))
+                cv.circle(frame_1_processed, coordinates_of_circles_BLUE_[i], 5, (0, 255, 0))
+                cv.circle(frame_1_processed, coordinates_of_circles_ORANGE_[i], 5, (0, 255, 0))
+                cv.circle(frame_1_processed, coordinates_of_circles_YELLOW_[i], 5, (0, 255, 0))
+
+            frame_2_orig = cv.flip(frame_2_orig, 0)
+            frame_2_processed = cv.flip(frame_2_processed, 0)
+
+            # Display both original and processed frames
+            cv.imshow('Lower Camera - Original', frame_2_orig)
+            cv.imshow('Lower Camera - Processed', frame_2_processed)
+            cv.imshow('Upper Camera - Original', frame_1_orig)
+            cv.imshow('Upper Camera - Processed', frame_1_processed)
 
             if cv.waitKey(1) == ord('q'):
                 break
@@ -466,18 +619,45 @@ def debug_color_detection():
         print(f"Debug error: {str(e)}")
 
 
+def recalibrate_problematic_colors():
+    """Recalibrate the colors that are being confused"""
+    try:
+        scanner = Scanner()
+
+        # Recalibrate the problematic colors
+        problematic_colors = ["yellow", "blue", "green", "white"]
+
+        print("Recalibrating problematic colors...")
+        print("Please make sure the cube is in the correct position for each color.")
+
+        for color in problematic_colors:
+            print(f"\nPreparing to calibrate {color}...")
+            input(f"Press Enter when the {color} face is properly positioned and lit...")
+
+            if color in ["yellow", "orange", "blue"]:
+                scanner.upper_camera.calibrate_specific_color(color)
+            else:
+                scanner.lower_camera.calibrate_specific_color(color)
+
+        print("\nRecalibration complete!")
+        scanner.release_cameras()
+
+    except Exception as e:
+        print(f"Recalibration error: {str(e)}")
+
+
 # Example usage
 if __name__ == "__main__":
     # For calibration and debugging
     # showing_frame()
 
     # For debugging color detection
-    #debug_color_detection()
+    # debug_color_detection()
 
     # For actual scanning
     try:
         scanner = Scanner()
-        scanner.calibrate_values()
+        # scanner.calibrate_values()
         cube_state = scanner.get_cube_state()
         print(f"Cube state: {cube_state}")
         scanner.release_cameras()
