@@ -1,0 +1,478 @@
+# ПЛАН РАЗРАБОТКИ WEB-ВЕРСИИ CUBING ROBOT v2
+
+## ОБЗОР ПРОЕКТА
+
+Веб-версия Cubing Robot представляет собой Flask-приложение, которое заменяет десктопное PyQt6 приложение и запускается на одноплатном компьютере Orange Pi Zero 3. Сервер обеспечивает управление роботом через веб-интерфейс, автоматическое управление WiFi подключениями и все функции оригинального десктопного приложения.
+
+## АРХИТЕКТУРА СИСТЕМЫ
+
+### Технологический стек:
+- **Backend**: Python 3.13 + Flask
+- **Frontend**: HTML5, CSS3, JavaScript (без фреймворков)
+- **База данных**: SQLite (существующие базы)
+- **Коммуникация с роботом**: Serial (Arduino Mega 2560)
+- **Камеры**: OpenCV + USB камеры (пока только UI)
+- **Сетевые настройки**: NetworkManager через Python
+- **Интернационализация**: Flask-Babel (русский/английский)
+
+### Режимы работы сети:
+1. **AP Mode** (Access Point): Orange Pi создает собственную сеть "CubingRobot_AP"
+2. **STA Mode** (Station): Orange Pi подключается к внешней WiFi сети
+3. **Автопереключение**: При запуске проверяет доступные сохраненные сети
+
+## СТРУКТУРА ФАЙЛОВ И ПАПОК
+
+```
+cubing_robot_web/
+├── app.py                          # Главный файл Flask приложения
+├── config.py                       # Конфигурация приложения
+├── requirements.txt                # Зависимости Python
+├── run.py                          # Точка входа для запуска сервера
+│
+├── app/                            # Основной модуль приложения
+│   ├── __init__.py                 # Инициализация Flask app
+│   ├── models/                     # Модели данных
+│   │   ├── __init__.py
+│   │   ├── robot_state.py          # Состояние робота (блокировка задач)
+│   │   ├── wifi_manager.py         # Управление WiFi
+│   │   ├── settings.py             # Настройки приложения
+│   │   └── database_manager.py     # Работа с SQLite базами
+│   │
+│   ├── controllers/                # Контроллеры (роуты)
+│   │   ├── __init__.py
+│   │   ├── main.py                 # Главная страница
+│   │   ├── solving.py              # Сборка кубика
+│   │   ├── scramble.py             # Скрамблы
+│   │   ├── manual_turns.py         # Ручное управление
+│   │   ├── patterns.py             # Узоры
+│   │   ├── learning.py             # Обучение
+│   │   ├── reference.py            # Справка
+│   │   ├── wifi.py                 # WiFi настройки
+│   │   ├── settings.py             # Настройки системы
+│   │   └── auth.py                 # Аутентификация (опционально)
+│   │
+│   ├── services/                   # Бизнес-логика
+│   │   ├── __init__.py
+│   │   ├── arduino_service.py      # Коммуникация с Arduino
+│   │   ├── camera_service.py       # Работа с камерами (заглушки)
+│   │   ├── cube_solver.py          # Алгоритмы решения кубика
+│   │   ├── pattern_service.py      # Работа с узорами
+│   │   ├── scramble_service.py     # Генерация скрамблов
+│   │   ├── wifi_service.py         # WiFi операции
+│   │   └── robot_manager.py        # Управление состоянием робота
+│   │
+│   ├── utils/                      # Утилиты
+│   │   ├── __init__.py
+│   │   ├── decorators.py           # Декораторы (проверка блокировки)
+│   │   ├── validators.py           # Валидация данных
+│   │   ├── exceptions.py           # Пользовательские исключения
+│   │   └── helpers.py              # Вспомогательные функции
+│   │
+│   └── templates/                  # HTML шаблоны
+│       ├── base.html               # Базовый шаблон
+│       ├── layout.html             # Основной layout
+│       ├── components/             # Компоненты
+│       │   ├── navbar.html         # Навигация
+│       │   ├── footer.html         # Подвал
+│       │   ├── robot_status.html   # Статус робота
+│       │   └── messages.html       # Сообщения об ошибках/успехе
+│       │
+│       ├── pages/                  # Страницы
+│       │   ├── index.html          # Главная страница
+│       │   ├── solving.html        # Сборка кубика
+│       │   ├── scramble.html       # Скрамблы
+│       │   ├── manual_turns.html   # Ручное управление
+│       │   ├── patterns.html       # Узоры
+│       │   ├── learning.html       # Обучение
+│       │   ├── reference.html      # Справка
+│       │   ├── wifi.html           # WiFi настройки
+│       │   ├── settings.html       # Настройки
+│       │   └── login.html          # Вход в систему
+│       │
+│       └── errors/                 # Страницы ошибок
+│           ├── 404.html
+│           ├── 500.html
+│           └── robot_busy.html     # Робот занят
+│
+├── static/                         # Статические файлы
+│   ├── css/                        # Стили
+│   │   ├── main.css                # Основные стили
+│   │   ├── themes/                 # Темы оформления
+│   │   │   ├── light.css           # Светлая тема
+│   │   │   └── dark.css            # Темная тема
+│   │   └── components/             # Стили компонентов
+│   │       ├── cube_editor.css     # Редактор кубика
+│   │       ├── robot_controls.css  # Элементы управления роботом
+│   │       └── wifi_manager.css    # WiFi интерфейс
+│   │
+│   ├── js/                         # JavaScript
+│   │   ├── main.js                 # Основная логика
+│   │   ├── cube_editor.js          # Редактор конфигурации кубика
+│   │   ├── robot_controls.js       # Управление роботом
+│   │   ├── wifi_manager.js         # WiFi управление
+│   │   ├── settings.js             # Настройки
+│   │   ├── theme_switcher.js       # Переключение тем
+│   │   └── utils.js                # Утилиты
+│   │
+│   └── images/                     # Изображения (копия из Desktop)
+│       ├── logo/                   # Логотипы
+│       ├── patterns/               # Изображения узоров
+│       └── turns/                  # Изображения поворотов
+│
+├── databases/                      # Базы данных (копия из Desktop)
+│   ├── Algorithms.sqlite
+│   ├── Base_method_algorithms_data.sqlite
+│   ├── CFOP_algorithms_data.sqlite
+│   ├── cube_patterns_data.sqlite
+│   ├── patterns_data.sqlite
+│   └── Scrambles_data.sqlite
+│
+├── devices/                        # Устройства (адаптированный код)
+│   ├── __init__.py
+│   ├── arduino/                    # Arduino коммуникация
+│   │   ├── __init__.py
+│   │   └── connection.py           # Адаптированный arduino_connection.py
+│   │
+│   └── camera/                     # Камеры (пока заглушки)
+│       ├── __init__.py
+│       ├── scanner.py              # Адаптированный camera.py
+│       └── calibration.py          # Калибровка камер
+│
+├── system/                         # Системные файлы
+│   ├── __init__.py
+│   ├── network_manager.py          # Управление сетевыми интерфейсами
+│   ├── system_info.py             # Информация о системе
+│   └── startup_manager.py         # Управление автозапуском
+│
+├── translations/                   # Переводы (Flask-Babel)
+│   ├── ru/                        # Русский язык
+│   │   └── LC_MESSAGES/
+│   │       ├── messages.po
+│   │       └── messages.mo
+│   │
+│   └── en/                        # Английский язык
+│       └── LC_MESSAGES/
+│           ├── messages.po
+│           └── messages.mo
+│
+├── data/                          # Данные приложения
+│   ├── robot_state.json           # Состояние робота
+│   ├── wifi_credentials.json      # Сохраненные WiFi сети
+│   ├── app_settings.json          # Настройки приложения
+│   └── last_scramble_index        # Последний индекс скрамбла
+│
+├── logs/                          # Логи
+│   ├── app.log                    # Логи приложения
+│   ├── robot.log                  # Логи робота
+│   └── wifi.log                   # Логи WiFi
+│
+└── tests/                         # Тесты (для будущего)
+    ├── __init__.py
+    ├── test_controllers.py
+    ├── test_services.py
+    └── test_models.py
+```
+
+## ДЕТАЛЬНОЕ ОПИСАНИЕ КОМПОНЕНТОВ
+
+### 1. ОСНОВНОЕ ПРИЛОЖЕНИЕ (app.py / run.py)
+
+**app.py**:
+- Создание Flask приложения
+- Регистрация blueprints
+- Конфигурация Babel для интернационализации
+- Настройка логирования
+- Инициализация системных компонентов
+
+**run.py**:
+- Точка входа
+- Проверка системных требований
+- Инициализация WiFi при запуске
+- Запуск Flask сервера
+
+### 2. МОДЕЛИ ДАННЫХ
+
+**robot_state.py**:
+```python
+class RobotState:
+    def __init__(self):
+        self.is_busy = False
+        self.current_task = None
+        self.connection_status = False
+    
+    def lock_robot(self, task_name):
+        # Блокировка робота для задачи
+    
+    def unlock_robot(self):
+        # Разблокировка робота
+    
+    def is_robot_available(self):
+        # Проверка доступности робота
+```
+
+**wifi_manager.py**:
+```python
+class WiFiManager:
+    def get_available_networks(self):
+        # Получение доступных сетей
+    
+    def connect_to_network(self, ssid, password):
+        # Подключение к сети
+    
+    def disconnect_from_network(self):
+        # Отключение от сети
+    
+    def start_ap_mode(self):
+        # Запуск режима точки доступа
+    
+    def get_saved_networks(self):
+        # Получение сохраненных сетей
+```
+
+**settings.py**:
+```python
+class AppSettings:
+    def __init__(self):
+        self.language = 'ru'
+        self.theme = 'light'
+        self.auth_enabled = False
+        self.username = None
+        self.password_hash = None
+    
+    def save_settings(self):
+        # Сохранение настроек в JSON
+    
+    def load_settings(self):
+        # Загрузка настроек из JSON
+```
+
+### 3. КОНТРОЛЛЕРЫ (РОУТЫ)
+
+**main.py** - Главная страница:
+```python
+@main_bp.route('/')
+def index():
+    # Отображение главной страницы с навигацией
+    # Проверка статуса робота и Arduino
+    # Отображение текущего состояния системы
+```
+
+**solving.py** - Сборка кубика:
+```python
+@solving_bp.route('/solving')
+def solving_page():
+    # Страница сборки кубика
+
+@solving_bp.route('/solve', methods=['POST'])
+def solve_cube():
+    # Получение конфигурации кубика
+    # Генерация алгоритма решения
+    # Отправка команд на Arduino
+    # Проверка блокировки робота
+```
+
+**wifi.py** - WiFi управление:
+```python
+@wifi_bp.route('/wifi')
+def wifi_page():
+    # Отображение WiFi настроек
+
+@wifi_bp.route('/wifi/scan', methods=['POST'])
+def scan_networks():
+    # Сканирование доступных сетей
+
+@wifi_bp.route('/wifi/connect', methods=['POST'])
+def connect_network():
+    # Подключение к выбранной сети
+
+@wifi_bp.route('/wifi/disconnect', methods=['POST'])
+def disconnect_network():
+    # Отключение от текущей сети
+```
+
+### 4. СЕРВИСЫ
+
+**arduino_service.py**:
+```python
+class ArduinoService:
+    def __init__(self):
+        self.connection = None
+        self.port = '/dev/ttyUSB0'  # Статический порт на Orange Pi
+    
+    def connect(self):
+        # Подключение к Arduino
+    
+    def disconnect(self):
+        # Отключение от Arduino
+    
+    def send_algorithm(self, moves):
+        # Отправка последовательности ходов
+    
+    def set_motor_speed(self, speed):
+        # Установка скорости моторов
+    
+    def check_connection(self):
+        # Проверка подключения
+```
+
+**wifi_service.py**:
+```python
+class WiFiService:
+    def __init__(self):
+        self.network_manager = NetworkManager()
+    
+    def auto_connect_on_startup(self):
+        # Автоподключение при запуске
+        # Логика: попытка подключения к сохраненным сетям
+        # Если неудача - запуск AP режима
+    
+    def switch_to_ap_mode(self):
+        # Переключение в режим точки доступа
+    
+    def switch_to_sta_mode(self, ssid, password):
+        # Переключение в режим клиента
+```
+
+**robot_manager.py**:
+```python
+class RobotManager:
+    def __init__(self):
+        self.state = RobotState()
+        self.arduino = ArduinoService()
+    
+    def execute_task(self, task_type, data):
+        # Выполнение задачи с блокировкой
+        # Проверка доступности робота
+        # Выполнение задачи
+        # Разблокировка робота
+```
+
+### 5. ПОЛЬЗОВАТЕЛЬСКИЙ ИНТЕРФЕЙС
+
+**Навигация**:
+- Главная
+- Сборка кубика
+- Скрамблы
+- Ручное управление
+- Узоры
+- Обучение
+- Справка
+- WiFi
+- Настройки
+
+**Элементы интерфейса**:
+- Индикатор статуса Arduino (подключен/отключен)
+- Индикатор статуса робота (свободен/занят)
+- Индикатор WiFi статуса
+- Переключатель темы (светлая/темная)
+- Переключатель языка (RU/EN)
+
+**Редактор кубика** (solving.html):
+- 54 цветные кнопки для ручного ввода конфигурации
+- Кнопки выбора метода решения
+- Слайдер скорости моторов
+- Кнопка "Решить"
+- Отображение алгоритма решения
+
+### 6. СИСТЕМА БЛОКИРОВКИ РОБОТА
+
+```python
+# Декоратор для защиты эндпоинтов
+@robot_required
+def solve_cube():
+    # Эндпоинт автоматически проверяет доступность робота
+    # При занятости отображает сообщение об ошибке
+```
+
+### 7. ИНТЕРНАЦИОНАЛИЗАЦИЯ
+
+**Файлы переводов**:
+- translations/ru/LC_MESSAGES/messages.po
+- translations/en/LC_MESSAGES/messages.po
+
+**Использование в шаблонах**:
+```html
+<h1>{{ _('Cubing Robot Control Panel') }}</h1>
+<button>{{ _('Solve Cube') }}</button>
+```
+
+### 8. КОНФИГУРАЦИЯ
+
+**config.py**:
+```python
+class Config:
+    SECRET_KEY = 'cubing-robot-secret-key'
+    BABEL_DEFAULT_LOCALE = 'ru'
+    BABEL_DEFAULT_TIMEZONE = 'UTC'
+    ARDUINO_PORT = '/dev/ttyUSB0'
+    ARDUINO_BAUDRATE = 9600
+    WIFI_AP_SSID = 'CubingRobot_AP'
+    WIFI_AP_PASSWORD = 'cubingrobot2024'
+```
+
+## ПЛАН РЕАЛИЗАЦИИ (ЭТАПЫ)
+
+### Этап 1: Основная инфраструктура
+1. Создание структуры папок
+2. Настройка Flask приложения
+3. Базовая навигация и layout
+4. Система блокировки робота
+5. Интернационализация
+
+### Этап 2: Основные страницы
+1. Главная страница
+2. Страница сборки кубика (без камер)
+3. Страница ручного управления
+4. Базовая коммуникация с Arduino
+
+### Этап 3: Дополнительные функции
+1. Страницы скрамблов, узоров, обучения
+2. Система настроек
+3. Опциональная аутентификация
+4. Темы оформления
+
+### Этап 4: WiFi управление
+1. WiFi сервис
+2. Страница WiFi настроек
+3. Автопереключение режимов
+4. Сохранение учетных данных
+
+### Этап 5: Интеграция камер (будущий этап)
+1. Интеграция сканирования кубика
+2. Предварительный просмотр камер
+3. Калибровка камер
+
+### Этап 6: Полировка и оптимизация
+1. Обработка ошибок
+2. Логирование
+3. Производительность
+4. Тестирование
+
+## ТРЕБОВАНИЯ К ЗАВИСИМОСТЯМ
+
+**requirements.txt**:
+```
+Flask==3.0.0
+Flask-Babel==4.0.0
+pyserial==3.5
+rubik-solver==0.2.0
+opencv-python==4.8.1.78
+numpy==1.24.3
+python-wifi==0.6.1
+```
+
+## ОСОБЕННОСТИ РАЗВЕРТЫВАНИЯ
+
+1. **Автозапуск**: systemd сервис для автоматического запуска при загрузке Orange Pi
+2. **WiFi инициализация**: Скрипт проверки и подключения к сохраненным сетям при запуске
+3. **Статический порт Arduino**: Arduino всегда подключен к одному USB порту
+4. **Права доступа**: Права для работы с сетевыми интерфейсами и USB устройствами
+
+## БЕЗОПАСНОСТЬ
+
+1. **Локальная сеть**: Сервер работает только в локальной сети
+2. **Опциональная аутентификация**: По желанию пользователя
+3. **Блокировка робота**: Защита от одновременных команд
+4. **Валидация данных**: Проверка всех входящих данных
+
+Этот план обеспечивает полную функциональность десктопной версии в веб-формате с дополнительными возможностями управления WiFi и системными настройками.
