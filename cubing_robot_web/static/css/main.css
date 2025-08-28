@@ -1,0 +1,42 @@
+:root{
+	--bg:#0e0f14;
+	--bg-card:#151822;
+	--text:#e8ecf1;
+	--muted:#a5b1c2;
+	--primary:#4f8cff;
+	--primary-600:#3a72da;
+	--accent:#7bd389;
+	--error:#ff5c5c;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:linear-gradient(180deg,#0e0f14,#10131a 40%,#0f131b);color:var(--text);font:16px/1.5 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+.container{max-width:1080px;margin:0 auto;padding:24px}
+
+.navbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:rgba(10,12,18,.7);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.06)}
+.nav-brand{font-weight:700;letter-spacing:.3px}
+.nav-links{display:flex;gap:20px;list-style:none;margin:0;padding:0}
+.nav-links a{color:var(--muted);text-decoration:none;padding:8px 10px;border-radius:8px;transition:all .2s ease}
+.nav-links a:hover{color:var(--text);background:rgba(255,255,255,.05)}
+.nav-links .disabled{opacity:.5;pointer-events:none}
+
+.hero{padding:40px 0}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.card{background:var(--bg-card);padding:18px;border-radius:14px;color:inherit;text-decoration:none;border:1px solid rgba(255,255,255,.06);transition:transform .18s ease, box-shadow .18s ease}
+.card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,.28)}
+.card.disabled{opacity:.5;pointer-events:none}
+
+.flash-area{display:grid;gap:8px;margin-bottom:12px}
+.flash{padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.06)}
+.flash.error{border:1px solid rgba(255,92,92,.55);color:#ffdede}
+.flash.success{border:1px solid rgba(123,211,137,.6);color:#e7ffef}
+
+.form{display:grid;gap:12px;max-width:720px}
+textarea,input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--text);outline:none}
+textarea:focus,input:focus{border-color:var(--primary)}
+.btn{padding:10px 14px;border:0;border-radius:10px;cursor:pointer}
+.btn.primary{background:linear-gradient(135deg,var(--primary),var(--primary-600));color:#fff}
+
+.fade-in{animation:fadeIn .35s ease both}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}

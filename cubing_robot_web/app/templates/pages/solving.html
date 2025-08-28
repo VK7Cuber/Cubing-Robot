@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Сборка кубика</h2>
+<form action="/solving/solve" method="post" class="form">
+	<label for="cube">Конфигурация кубика (54 символа ybrgow):</label>
+	<textarea id="cube" name="cube" rows="3" required>yyyyyyyyybbbbbbbbbrrrrrrrrrgggggggggooooooooowwwwwwwww</textarea>
+	<label for="speed">Скорость моторов (0-255):</label>
+	<input type="number" id="speed" name="speed" min="0" max="255" value="200" />
+	<button type="submit" class="btn primary">Собрать</button>
+</form>
+{% endblock %}

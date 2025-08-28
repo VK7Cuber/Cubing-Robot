@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="hero">
+	<h1>Панель управления Cubing Robot</h1>
+	<p>Добро пожаловать! Используйте навигацию выше, чтобы управлять роботом.</p>
+</section>
+<section class="cards">
+	<a href="/solving/" class="card">
+		<h3>Сборка кубика</h3>
+		<p>Ввод конфигурации и отправка алгоритма.</p>
+	</a>
+	<a class="card disabled">
+		<h3>Скрамблы</h3>
+		<p>История и генерация (скоро).</p>
+	</a>
+	<a class="card disabled">
+		<h3>Ручное управление</h3>
+		<p>Повороты граней (скоро).</p>
+	</a>
+</section>
+{% endblock %}
