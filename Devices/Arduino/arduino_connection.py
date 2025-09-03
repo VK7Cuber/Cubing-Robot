@@ -3,12 +3,21 @@ import struct
 import serial.tools.list_ports
 import time
 
+#from other.Other.speeding_up_algorithm import *
+
 
 class Arduino:
     def __init__(self):
-        self.encoding = {"U": 0, "D": 1, "L": 2, "F": 3, "R": 4, "B": 5,
+        self.encoding = {
+                         "U": 0, "D": 1, "L": 2, "F": 3, "R": 4, "B": 5,
                          "U'": 6, "D'": 7, "L'": 8, "F'": 9, "R'": 10, "B'": 11,
-                         "U2": 12, "D2": 13, "L2": 14, "F2": 15, "R2": 16, "B2": 17}
+                         "U2": 12, "D2": 13, "L2": 14, "F2": 15, "R2": 16, "B2": 17,
+                         "UD": 18, "UD'": 19, "UD2": 20, "U'D": 21, "U'D'": 22, "U'D2": 23,
+                         "U2D": 24, "U2D'": 25, "U2D2": 26, "FB": 27, "FB'": 28, "FB2": 29,
+                         "F'B": 30, "F'B'": 31, "F'B2": 32, "F2B": 33, "F2B'": 34, "F2B2": 35,
+                         "LR": 36, "LR'": 37, "LR2": 38, "L'R": 39, "L'R'": 40, "L'R2": 41,
+                         "L2R": 42, "L2R'": 43, "L2R2": 44
+                         }
         self.arduino = None
 
     def connect_arduino(self, port):
@@ -33,6 +42,7 @@ class Arduino:
             is_got = True
 
     def send_message(self, algorithm):
+        #algorithm = speed_up_algorithm(algorithm)
         if self.arduino is None:
             raise ConnectionError
         for turn in algorithm:

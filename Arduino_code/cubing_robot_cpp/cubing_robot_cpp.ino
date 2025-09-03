@@ -120,7 +120,61 @@ void B_turn(int degrees, int direction){
   B_stepper.brake();
   
   Serial.println(100);
+}
 
+// New dual-motor simultaneous turns
+void UD_turn(int U_degrees, int U_direction, int D_degrees, int D_direction){
+  // Brake other axes
+  L_stepper.brake();
+  F_stepper.brake();
+  R_stepper.brake();
+  B_stepper.brake();
+
+  U_stepper.setTarget(U_direction * U_degrees, RELATIVE);
+  D_stepper.setTarget(D_direction * D_degrees, RELATIVE);
+  while (U_stepper.tick() | D_stepper.tick()){
+    continue;
+  }
+  U_stepper.brake();
+  D_stepper.brake();
+
+  Serial.println(100);
+}
+
+void FB_turn(int F_degrees, int F_direction, int B_degrees, int B_direction){
+  // Brake other axes
+  U_stepper.brake();
+  D_stepper.brake();
+  L_stepper.brake();
+  R_stepper.brake();
+
+  F_stepper.setTarget(F_direction * F_degrees, RELATIVE);
+  B_stepper.setTarget(B_direction * B_degrees, RELATIVE);
+  while (F_stepper.tick() | B_stepper.tick()){
+    continue;
+  }
+  F_stepper.brake();
+  B_stepper.brake();
+
+  Serial.println(100);
+}
+
+void LR_turn(int L_degrees, int L_direction, int R_degrees, int R_direction){
+  // Brake other axes
+  U_stepper.brake();
+  D_stepper.brake();
+  F_stepper.brake();
+  B_stepper.brake();
+
+  L_stepper.setTarget(L_direction * L_degrees, RELATIVE);
+  R_stepper.setTarget(R_direction * R_degrees, RELATIVE);
+  while (L_stepper.tick() | R_stepper.tick()){
+    continue;
+  }
+  L_stepper.brake();
+  R_stepper.brake();
+
+  Serial.println(100);
 }
 
 
@@ -229,6 +283,37 @@ void turn_motor(int turn){
   else if (turn == 15) F_turn(100 * 16, 1);
   else if (turn == 16) R_turn(100 * 16, 1);
   else if (turn == 17) B_turn(100 * 16, 1);
+
+  // Dual-axis turns based on encoding 18..44
+  else if (turn == 18) UD_turn(50 * 16, -1, 50 * 16, -1);      // UD
+  else if (turn == 19) UD_turn(50 * 16, -1, 50 * 16, 1);       // UD'
+  else if (turn == 20) UD_turn(50 * 16, -1, 100 * 16, 1);      // UD2
+  else if (turn == 21) UD_turn(50 * 16, 1, 50 * 16, -1);       // U'D
+  else if (turn == 22) UD_turn(50 * 16, 1, 50 * 16, 1);        // U'D'
+  else if (turn == 23) UD_turn(50 * 16, 1, 100 * 16, 1);       // U'D2
+  else if (turn == 24) UD_turn(100 * 16, 1, 50 * 16, -1);      // U2D
+  else if (turn == 25) UD_turn(100 * 16, 1, 50 * 16, 1);       // U2D'
+  else if (turn == 26) UD_turn(100 * 16, 1, 100 * 16, 1);      // U2D2
+
+  else if (turn == 27) FB_turn(50 * 16, -1, 50 * 16, -1);      // FB
+  else if (turn == 28) FB_turn(50 * 16, -1, 50 * 16, 1);       // FB'
+  else if (turn == 29) FB_turn(50 * 16, -1, 100 * 16, 1);      // FB2
+  else if (turn == 30) FB_turn(50 * 16, 1, 50 * 16, -1);       // F'B
+  else if (turn == 31) FB_turn(50 * 16, 1, 50 * 16, 1);        // F'B'
+  else if (turn == 32) FB_turn(50 * 16, 1, 100 * 16, 1);       // F'B2
+  else if (turn == 33) FB_turn(100 * 16, 1, 50 * 16, -1);      // F2B
+  else if (turn == 34) FB_turn(100 * 16, 1, 50 * 16, 1);       // F2B'
+  else if (turn == 35) FB_turn(100 * 16, 1, 100 * 16, 1);      // F2B2
+
+  else if (turn == 36) LR_turn(50 * 16, -1, 50 * 16, -1);      // LR
+  else if (turn == 37) LR_turn(50 * 16, -1, 50 * 16, 1);       // LR'
+  else if (turn == 38) LR_turn(50 * 16, -1, 100 * 16, 1);      // LR2
+  else if (turn == 39) LR_turn(50 * 16, 1, 50 * 16, -1);       // L'R
+  else if (turn == 40) LR_turn(50 * 16, 1, 50 * 16, 1);        // L'R'
+  else if (turn == 41) LR_turn(50 * 16, 1, 100 * 16, 1);       // L'R2
+  else if (turn == 42) LR_turn(100 * 16, 1, 50 * 16, -1);      // L2R
+  else if (turn == 43) LR_turn(100 * 16, 1, 50 * 16, 1);       // L2R'
+  else if (turn == 44) LR_turn(100 * 16, 1, 100 * 16, 1);      // L2R2
   
 }
 
