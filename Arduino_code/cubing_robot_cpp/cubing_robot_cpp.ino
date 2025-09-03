@@ -20,6 +20,7 @@ GStepper2< STEPPER2WIRE> L_stepper(200 * 16, A0, A1, A2);
 // }
 
 int CURRENT_SPEED = -1;
+float MAX_SPEED = 7000.0;
 
 void U_turn(int degrees, int direction){
   D_stepper.brake();
@@ -240,12 +241,12 @@ void setup_motors(){
   // R_stepper.setRunMode(FOLLOW_POS);
   // B_stepper.setRunMode(FOLLOW_POS);
 
-  U_stepper.setMaxSpeed(7000);
-  D_stepper.setMaxSpeed(7000);
-  L_stepper.setMaxSpeed(7000);
-  F_stepper.setMaxSpeed(7000);
-  R_stepper.setMaxSpeed(7000);
-  B_stepper.setMaxSpeed(7000);
+  U_stepper.setMaxSpeed(int(MAX_SPEED));
+  D_stepper.setMaxSpeed(int(MAX_SPEED));
+  L_stepper.setMaxSpeed(int(MAX_SPEED));
+  F_stepper.setMaxSpeed(int(MAX_SPEED));
+  R_stepper.setMaxSpeed(int(MAX_SPEED));
+  B_stepper.setMaxSpeed(int(MAX_SPEED));
 
   U_stepper.setAcceleration(0);
   D_stepper.setAcceleration(0);
@@ -319,7 +320,7 @@ void turn_motor(int turn){
 
 void change_speed_of_motors(int percents){
   int correct_percents = 255 - percents;
-  float speed = correct_percents / 100.0 * 7000.0;
+  float speed = correct_percents / 100.0 * MAX_SPEED;
   int int_speed = int(speed);
   if (int_speed != CURRENT_SPEED) {
     CURRENT_SPEED = int_speed;
