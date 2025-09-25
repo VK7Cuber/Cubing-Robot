@@ -10,6 +10,7 @@ from Windows_design_python.Scramble_window_design import Ui_Scramble_window_desi
 
 from Devices.Arduino.arduino_connection import *
 from other.Other.scramble import *
+from other.Other.validate_scramble import validate_scramble
 
 from rubik_solver import utils
 
@@ -70,8 +71,22 @@ class ScrambleWindow(QMainWindow, Ui_Scramble_window_design):
         self.change_mode_comboBox.currentIndexChanged.connect(self.__change_window_functions__)
         self.buttonGroup.buttonClicked.connect(self.__change_button_color__)
 
+        # Competitive scramble tab actions
+        if hasattr(self, 'validate_scrambles_button'):
+            self.validate_scrambles_button.clicked.connect(self.__validate_competitive_scrambles__)
+        if hasattr(self, 'start_competitive_scramble_button'):
+            self.start_competitive_scramble_button.clicked.connect(self.__start_competitive_scramble__)
+        if hasattr(self, 'generate_scrambles_button'):
+            self.generate_scrambles_button.clicked.connect(self.__generate_competitive_scrambles__)
+        if hasattr(self, 'clear_all_scrambles_button'):
+            self.clear_all_scrambles_button.clicked.connect(self.__clear_all_competitive_scrambles__)
+
     def __change_window_functions__(self):
         self.stackedWidget.setCurrentIndex(self.change_mode_comboBox.currentIndex())
+
+        # ensure default speed values for new tab
+        if hasattr(self, 'competitive_speed_spinbox'):
+            self.competitive_speed_spinbox.setValue(99)
 
     def __change_button_color__(self, button):
         color = button.palette().window().color().name()
@@ -122,6 +137,14 @@ class ScrambleWindow(QMainWindow, Ui_Scramble_window_design):
             self.statusbar.setStyleSheet("background: red")
             self.statusbar.showMessage("Робот не подключён!")
 
+    def __scramble_cube_with_speed__(self, scramble, ui_speed_spinbox):
+        if arduino.check_connection():
+            arduino.set_motors_speed(255 - ((int(ui_speed_spinbox.text())) + 1))
+            arduino.send_message(scramble)
+        else:
+            self.statusbar.setStyleSheet("background: red")
+            self.statusbar.showMessage("Робот не подключён!")
+
     def __cut_down__(self):
         self.timer_label.setText("0 : 00")
         self.scramble_label.setText(" - ")
@@ -143,6 +166,92 @@ class ScrambleWindow(QMainWindow, Ui_Scramble_window_design):
         scramble = make_scramble()
         self.scramble_label.setText(" ".join(scramble))
         self.scramble_cube(scramble)
+
+    def __get_competitive_scrambles_widgets__(self):
+        inputs = []
+        radios = []
+        for idx in range(1, 6):
+            input_widget = getattr(self, f"scramble_input_{idx}", None)
+            radio_widget = getattr(self, f"radio_{idx}", None)
+            if input_widget is not None and radio_widget is not None:
+                inputs.append(input_widget)
+                radios.append(radio_widget)
+        return inputs, radios
+
+    def __validate_competitive_scrambles__(self):
+        inputs, _ = self.__get_competitive_scrambles_widgets__()
+        any_filled = False
+        has_error = False
+        self.statusbar.setStyleSheet("")
+        self.statusbar.showMessage("")
+
+        for idx, le in enumerate(inputs, start=1):
+            text = le.text()
+            # reset style before re-validate
+            le.setStyleSheet("")
+            if text.strip():
+                any_filled = True
+                valid, error, tokens = validate_scramble(text)
+                if not valid:
+                    has_error = True
+                    le.setStyleSheet("background: rgba(255,0,0,0.3)")
+                    self.statusbar.setStyleSheet("background: red")
+                    self.statusbar.showMessage(f"Ошибка в скрамбле {idx}: {error}")
+                    break
+
+        if not any_filled and not has_error:
+            self.statusbar.setStyleSheet("background: red")
+            self.statusbar.showMessage("Введите хотя бы один скрамбл для проверки.")
+            return
+        if not has_error:
+            self.statusbar.setStyleSheet("background: #008000")
+            self.statusbar.showMessage("Скрамблы корректны.")
+
+    def __start_competitive_scramble__(self):
+        inputs, radios = self.__get_competitive_scrambles_widgets__()
+        selected_index = None
+        for i, rb in enumerate(radios):
+            if rb.isChecked():
+                selected_index = i
+                break
+        if selected_index is None:
+            self.statusbar.setStyleSheet("background: red")
+            self.statusbar.showMessage("Выберите скрамбл для выполнения.")
+            return
+
+        le = inputs[selected_index]
+        text = le.text()
+        valid, error, tokens = validate_scramble(text)
+        # clear previous highlight
+        le.setStyleSheet("")
+        if not valid:
+            le.setStyleSheet("background: rgba(255,0,0,0.3)")
+            self.statusbar.setStyleSheet("background: red")
+            self.statusbar.showMessage(f"Ошибка: {error}")
+            return
+
+        # run scramble
+        if hasattr(self, 'competitive_speed_spinbox'):
+            self.__scramble_cube_with_speed__(tokens, self.competitive_speed_spinbox)
+        else:
+            # fallback to second tab speed control if not present
+            self.scramble_cube(tokens)
+
+    def __generate_competitive_scrambles__(self):
+        inputs, _ = self.__get_competitive_scrambles_widgets__()
+        self.statusbar.setStyleSheet("")
+        self.statusbar.showMessage("")
+        for le in inputs:
+            le.setStyleSheet("")
+            le.setText(" ".join(make_scramble()))
+
+    def __clear_all_competitive_scrambles__(self):
+        inputs, _ = self.__get_competitive_scrambles_widgets__()
+        self.statusbar.setStyleSheet("")
+        self.statusbar.showMessage("")
+        for le in inputs:
+            le.setStyleSheet("")
+            le.setText("")
 
     def __set_parent_position__(self):
         main_window_position = self.parent.pos()
