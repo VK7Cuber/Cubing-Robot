@@ -11,6 +11,7 @@ from Windows_design_python.Scramble_window_design import Ui_Scramble_window_desi
 from Devices.Arduino.arduino_connection import *
 from other.Other.scramble import *
 from other.Other.validate_scramble import validate_scramble
+from Windows.Cube_viewer_window import CubeViewerWindow
 
 from rubik_solver import utils
 
@@ -34,6 +35,7 @@ class ScrambleWindow(QMainWindow, Ui_Scramble_window_design):
         self.rubiks_cube = 'yyyyyyyyybbbbbbbbbrrrrrrrrrgggggggggooooooooowwwwwwwww'
 
         self.initUI()
+        self.viewer = CubeViewerWindow(self)
 
     def initUI(self):
         self.setupUi(self)
@@ -80,6 +82,11 @@ class ScrambleWindow(QMainWindow, Ui_Scramble_window_design):
             self.generate_scrambles_button.clicked.connect(self.__generate_competitive_scrambles__)
         if hasattr(self, 'clear_all_scrambles_button'):
             self.clear_all_scrambles_button.clicked.connect(self.__clear_all_competitive_scrambles__)
+        # Eye buttons next to each input
+        for idx in range(1, 6):
+            eye = getattr(self, f"scramble_eye_{idx}", None)
+            if eye is not None:
+                eye.clicked.connect(lambda _=None, i=idx: self.__open_viewer_for_index__(i))
 
     def __change_window_functions__(self):
         self.stackedWidget.setCurrentIndex(self.change_mode_comboBox.currentIndex())
@@ -177,6 +184,23 @@ class ScrambleWindow(QMainWindow, Ui_Scramble_window_design):
                 inputs.append(input_widget)
                 radios.append(radio_widget)
         return inputs, radios
+
+    def __open_viewer_for_index__(self, idx: int):
+        le = getattr(self, f"scramble_input_{idx}", None)
+        if le is None:
+            return
+        text = le.text()
+        valid, error, tokens = validate_scramble(text)
+        if not valid:
+            le.setStyleSheet("background: rgba(255,0,0,0.3)")
+            self.statusbar.setStyleSheet("background: red")
+            self.statusbar.showMessage(f"Ошибка в скрамбле {idx}: {error}")
+            return
+        # clear any previous highlight
+        le.setStyleSheet("")
+        self.statusbar.setStyleSheet("")
+        self.statusbar.showMessage("")
+        self.viewer.show_scramble(tokens)
 
     def __validate_competitive_scrambles__(self):
         inputs, _ = self.__get_competitive_scrambles_widgets__()

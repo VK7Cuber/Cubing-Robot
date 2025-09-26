@@ -663,6 +663,10 @@ class Ui_Scramble_window_design(object):
         self.scramble_input_1 = QtWidgets.QLineEdit(parent=self.page_3)
         self.scramble_input_1.setObjectName("scramble_input_1")
         self.horizontalLayout_cs_1.addWidget(self.scramble_input_1)
+        self.scramble_eye_1 = QtWidgets.QPushButton(parent=self.page_3)
+        self.scramble_eye_1.setFixedSize(28, 28)
+        self.scramble_eye_1.setObjectName("scramble_eye_1")
+        self.horizontalLayout_cs_1.addWidget(self.scramble_eye_1)
         self.verticalLayout_comp.addLayout(self.horizontalLayout_cs_1)
 
         self.horizontalLayout_cs_2 = QtWidgets.QHBoxLayout()
@@ -673,6 +677,10 @@ class Ui_Scramble_window_design(object):
         self.scramble_input_2 = QtWidgets.QLineEdit(parent=self.page_3)
         self.scramble_input_2.setObjectName("scramble_input_2")
         self.horizontalLayout_cs_2.addWidget(self.scramble_input_2)
+        self.scramble_eye_2 = QtWidgets.QPushButton(parent=self.page_3)
+        self.scramble_eye_2.setFixedSize(28, 28)
+        self.scramble_eye_2.setObjectName("scramble_eye_2")
+        self.horizontalLayout_cs_2.addWidget(self.scramble_eye_2)
         self.verticalLayout_comp.addLayout(self.horizontalLayout_cs_2)
 
         self.horizontalLayout_cs_3 = QtWidgets.QHBoxLayout()
@@ -683,6 +691,10 @@ class Ui_Scramble_window_design(object):
         self.scramble_input_3 = QtWidgets.QLineEdit(parent=self.page_3)
         self.scramble_input_3.setObjectName("scramble_input_3")
         self.horizontalLayout_cs_3.addWidget(self.scramble_input_3)
+        self.scramble_eye_3 = QtWidgets.QPushButton(parent=self.page_3)
+        self.scramble_eye_3.setFixedSize(28, 28)
+        self.scramble_eye_3.setObjectName("scramble_eye_3")
+        self.horizontalLayout_cs_3.addWidget(self.scramble_eye_3)
         self.verticalLayout_comp.addLayout(self.horizontalLayout_cs_3)
 
         self.horizontalLayout_cs_4 = QtWidgets.QHBoxLayout()
@@ -693,6 +705,10 @@ class Ui_Scramble_window_design(object):
         self.scramble_input_4 = QtWidgets.QLineEdit(parent=self.page_3)
         self.scramble_input_4.setObjectName("scramble_input_4")
         self.horizontalLayout_cs_4.addWidget(self.scramble_input_4)
+        self.scramble_eye_4 = QtWidgets.QPushButton(parent=self.page_3)
+        self.scramble_eye_4.setFixedSize(28, 28)
+        self.scramble_eye_4.setObjectName("scramble_eye_4")
+        self.horizontalLayout_cs_4.addWidget(self.scramble_eye_4)
         self.verticalLayout_comp.addLayout(self.horizontalLayout_cs_4)
 
         self.horizontalLayout_cs_5 = QtWidgets.QHBoxLayout()
@@ -703,6 +719,10 @@ class Ui_Scramble_window_design(object):
         self.scramble_input_5 = QtWidgets.QLineEdit(parent=self.page_3)
         self.scramble_input_5.setObjectName("scramble_input_5")
         self.horizontalLayout_cs_5.addWidget(self.scramble_input_5)
+        self.scramble_eye_5 = QtWidgets.QPushButton(parent=self.page_3)
+        self.scramble_eye_5.setFixedSize(28, 28)
+        self.scramble_eye_5.setObjectName("scramble_eye_5")
+        self.horizontalLayout_cs_5.addWidget(self.scramble_eye_5)
         self.verticalLayout_comp.addLayout(self.horizontalLayout_cs_5)
 
         # Speed selection
@@ -793,3 +813,8 @@ class Ui_Scramble_window_design(object):
         self.validate_scrambles_button.setText(_translate("Ui_Scramble_window_design", "Проверить скрамблы"))
         self.start_competitive_scramble_button.setText(_translate("Ui_Scramble_window_design", "Начать скрамбл"))
         self.clear_all_scrambles_button.setText(_translate("Ui_Scramble_window_design", "Очистить всё"))
+        self.scramble_eye_1.setText(_translate("Ui_Scramble_window_design", "👁"))
+        self.scramble_eye_2.setText(_translate("Ui_Scramble_window_design", "👁"))
+        self.scramble_eye_3.setText(_translate("Ui_Scramble_window_design", "👁"))
+        self.scramble_eye_4.setText(_translate("Ui_Scramble_window_design", "👁"))
+        self.scramble_eye_5.setText(_translate("Ui_Scramble_window_design", "👁"))
